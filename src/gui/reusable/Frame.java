@@ -24,11 +24,11 @@ public class Frame extends JFrame {
 
     private int getInitialWidth() {
         Dimension resolution = Toolkit.getDefaultToolkit().getScreenSize();
-        return (int) (resolution.getWidth() * this.appWidthDecimal);
+        return (int) (resolution.getWidth() * appWidthDecimal);
     }
 
     private int getInitialHeight() {
         Dimension resolution = Toolkit.getDefaultToolkit().getScreenSize();
-        return (int) (resolution.getHeight() * this.appHeightDecimal);
+        return (int) (resolution.getHeight() * appHeightDecimal);
     }
 }

@@ -2,44 +2,44 @@ package src.gui;
 
 import java.awt.BorderLayout;
 
-import src.gui.components.Footer;
-import src.gui.components.Header;
-import src.gui.components.Main;
+import src.gui.components.SortingAlgorithmSelector;
+import src.gui.components.SortingOptions;
+import src.gui.components.SortingVisualization;
 import src.gui.reusable.Frame;
 
 public class Gui {
     private Frame frame;
 
-    private Header header;
-    private Main main;
-    private Footer footer;
+    private SortingOptions sortingOptions;
+    private SortingVisualization sortingVisialization;
+    private SortingAlgorithmSelector sortingAlgorithmSelector;
 
     public Gui(String name) {
-        this.frame = new Frame(name);
+        frame = new Frame(name);
         
-        this.header = new Header();
-        this.frame.add(this.header, BorderLayout.NORTH);
+        sortingOptions = new SortingOptions();
+        frame.add(sortingOptions, BorderLayout.NORTH);
 
-        this.main = new Main();
-        this.frame.add(this.main, BorderLayout.CENTER);
+        sortingVisialization = new SortingVisualization();
+        frame.add(sortingVisialization, BorderLayout.CENTER);
 
-        this.footer = new Footer();
-        this.frame.add(this.footer, BorderLayout.SOUTH);
+        sortingAlgorithmSelector = new SortingAlgorithmSelector();
+        frame.add(sortingAlgorithmSelector, BorderLayout.SOUTH);
     }
 
     public Frame getFrame() {
-        return this.frame;
+        return frame;
     }
 
-    public Header getHeader() {
-        return this.header;
+    public SortingOptions getSortingOptions() {
+        return sortingOptions;
     }
 
-    public Main getMain() {
-        return this.main;
+    public SortingVisualization getSortingVisualization() {
+        return sortingVisialization;
     }
 
-    public Footer getFooter() {
-        return this.footer;
+    public SortingAlgorithmSelector getSortingAlgorithmSelector() {
+        return sortingAlgorithmSelector;
     }
 }

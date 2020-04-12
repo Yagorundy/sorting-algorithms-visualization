@@ -11,8 +11,8 @@ public class Button extends JButton {
 
     public Button(String name) {
         super(name);
-        Dimension size = new Dimension(300, 300);
-        this.setMaximumSize(size);
-        this.setPreferredSize(size);
+        Dimension size = new Dimension(150, 110);
+        setMaximumSize(size);
+        setPreferredSize(size);
     }
 }
