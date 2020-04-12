@@ -1,16 +1,18 @@
 package src.app;
 
+import src.gui.Gui;
+
 public class App {
     private final String appName = "Sorting Algorithms Visualization";
 
-    private AppGui gui;
+    private Gui gui;
     private AppStore store;
 
     public App() {
-        this.gui = new AppGui(appName);
+        this.gui = new Gui(appName);
         this.store = new AppStore();
         
-        this.gui.getSortButton().addActionListener(store.onSortButtonClicked());
+        this.gui.getHeader().getSortButton().addActionListener(store.onSortButtonClicked());
         // TODO - hook events to actions here
         
         this.gui.getFrame().setVisible(true);
