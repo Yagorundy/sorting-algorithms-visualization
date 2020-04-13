@@ -18,7 +18,7 @@ public class Frame extends JFrame {
 
     public Frame(String name) {
         super(name);
-        setSize(getInitialWidth(), getInitialHeight());
+        // setSize(getInitialWidth(), getInitialHeight());
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     }
 

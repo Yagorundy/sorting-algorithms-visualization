@@ -27,6 +27,6 @@ public class App {
             .forEach(button -> button.addActionListener(store.onAlgorithmSelected()));
         
         // Display app
-        gui.getFrame().setVisible(true);
+        gui.show();
     }
 }

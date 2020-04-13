@@ -27,6 +27,11 @@ public class Gui {
         frame.add(sortingAlgorithmSelector, BorderLayout.SOUTH);
     }
 
+    public void show() {
+        frame.pack();
+        frame.setVisible(true);
+    }
+
     public Frame getFrame() {
         return frame;
     }

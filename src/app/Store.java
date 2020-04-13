@@ -7,7 +7,7 @@ import src.gui.components.SortingVisualization;
 
 public class Store {
     private String selectedAlgorithm;
-    private int arrayLength = 30;
+    private int arrayLength = 16;
     private int[] array;
 
     Store() {

@@ -1,9 +1,9 @@
 package src.gui.reusable;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 
+import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -16,16 +16,22 @@ public class Rod extends JPanel {
     private JPanel rod;
     private JLabel label;
 
+    private static final int prefWidth = 75;
+    private static final int maxWidth = 100;
+
     public Rod(int height, String text) {
-        setLayout(new BorderLayout());
+        setAlignmentY(BOTTOM_ALIGNMENT);
+        setPreferredSize(new Dimension(prefWidth, height));
+        setMaximumSize(new Dimension(maxWidth, height));
+
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         
         rod = new JPanel();
         rod.setBackground(Color.YELLOW);
-        rod.setPreferredSize(new Dimension(40, height));
-        add(rod, BorderLayout.CENTER);
+        add(rod);
 
         label = new JLabel(text, JLabel.CENTER);
-        add(label, BorderLayout.PAGE_END);
+        add(label);
     }
 
     public String getText() {

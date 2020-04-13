@@ -1,9 +1,13 @@
 package src.gui.components;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.util.Arrays;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 
 import src.gui.reusable.Rod;
 
@@ -15,9 +19,15 @@ public class SortingVisualization extends JPanel {
 
     private final int maxRodHeight = 500;
 
+    private static final Dimension minRodFilter = new Dimension(15, 0);
+    private static final Dimension prefRodFilter = new Dimension(30, 0);
+    private static final Dimension maxRodSpace = new Dimension(42069, 0);
+
     private Rod[] rods;
 
     public SortingVisualization() {
+        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        setBorder(new EmptyBorder(100, 30, 100, 30));
         setBackground(Color.GREEN);
     }
 
@@ -34,6 +44,9 @@ public class SortingVisualization extends JPanel {
             Rod rod = new Rod(height, "" + num);
             rods[i] = rod;
             add(rod);
+
+            if (i != array.length - 1)
+                add(new Box.Filler(minRodFilter, prefRodFilter, maxRodSpace));
         }
 
         revalidate();
