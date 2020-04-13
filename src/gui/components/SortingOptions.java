@@ -6,6 +6,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 import src.gui.reusable.Button;
+import src.gui.reusable.CheckBox;
 import src.gui.reusable.Slider;
 
 public class SortingOptions extends JPanel {
@@ -16,6 +17,7 @@ public class SortingOptions extends JPanel {
 
     private Button sortButton;
     private Slider elementsSlider;
+    private CheckBox uniqueCheckBox;
     private Button shuffleButton;
 
     public SortingOptions() {
@@ -24,11 +26,14 @@ public class SortingOptions extends JPanel {
 
         sortButton = new Button("Sort");
         elementsSlider = new Slider("Huq");
+        uniqueCheckBox = new CheckBox("Unique elements", true);
         shuffleButton = new Button("Shuffle");
 
         add(sortButton);
         add(Box.createHorizontalGlue());
         add(elementsSlider);
+        add(Box.createHorizontalGlue());
+        add(uniqueCheckBox);
         add(Box.createHorizontalGlue());
         add(shuffleButton);
     }
@@ -39,6 +44,10 @@ public class SortingOptions extends JPanel {
 
     public Slider getElementsSlider() {
         return elementsSlider;
+    }
+
+    public CheckBox getUniqueCheckBox() {
+        return uniqueCheckBox;
     }
 
     public Button getShuffleButton() {

@@ -50,7 +50,7 @@ public class App {
         App self = this;
         return new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                self.gui.getSortingVisualization().shuffle(self.gui.getSortingOptions().getElementsSlider().getSlider().getValue());
+                self.gui.getSortingVisualization().shuffle(self.gui.getSortingOptions().getElementsSlider().getSlider().getValue(), self.gui.getSortingOptions().getUniqueCheckBox().isSelected());
             }
         };
     }
@@ -59,7 +59,7 @@ public class App {
         App self = this;
         return new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
-                self.gui.getSortingVisualization().shuffle(self.gui.getSortingOptions().getElementsSlider().getSlider().getValue());
+                self.gui.getSortingVisualization().shuffle(self.gui.getSortingOptions().getElementsSlider().getSlider().getValue(), self.gui.getSortingOptions().getUniqueCheckBox().isSelected());
             }
         };
     }
