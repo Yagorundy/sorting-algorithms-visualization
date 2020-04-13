@@ -12,13 +12,13 @@ import javax.swing.border.EmptyBorder;
 import src.gui.reusable.Rod;
 import src.shared.Sortable;
 
-public class SortingVisualization<T> extends JPanel implements Sortable {
+public class SortingVisualization extends JPanel implements Sortable {
     /**
      *
      */
     private static final long serialVersionUID = 7693365261886603164L;
 
-    private final int maxRodHeight = 500;
+    private final int maxRodHeight = 1024;
 
     private static final Dimension minRodFilter = new Dimension(15, 0);
     private static final Dimension prefRodFilter = new Dimension(30, 0);
