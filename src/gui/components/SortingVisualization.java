@@ -2,7 +2,7 @@ package src.gui.components;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.util.Arrays;
+import java.util.Random;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -10,8 +10,9 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 import src.gui.reusable.Rod;
+import src.shared.Sortable;
 
-public class SortingVisualization extends JPanel {
+public class SortingVisualization<T> extends JPanel implements Sortable {
     /**
      *
      */
@@ -23,25 +24,42 @@ public class SortingVisualization extends JPanel {
     private static final Dimension prefRodFilter = new Dimension(30, 0);
     private static final Dimension maxRodSpace = new Dimension(42069, 0);
 
+    private int[] array;
     private Rod[] rods;
 
-    public SortingVisualization() {
+    public SortingVisualization(final int length) {
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         setBorder(new EmptyBorder(100, 30, 100, 30));
         setBackground(Color.GREEN);
+
+        shuffle(length);
     }
 
-    public void setArray(int[] array) {
-        removeAll();        
+    public void shuffle(final int length) {
+        removeAll();
 
-        int min = Arrays.stream(array).min().getAsInt();
-        int max = Arrays.stream(array).max().getAsInt();
+        array = new int[length];
+        for (int i = 0; i < length; i++) {
+            array[i] = i + 1;
+        }
+
+        final Random random = new Random();
+        for (int i = 0; i < length; i++) {
+            final int change = random.nextInt(length);
+
+            final int t = array[i];
+            array[i] = array[change];
+            array[change] = t;
+        }
+
+        final int min = 1;
+        final int max = length;
 
         rods = new Rod[array.length];
         for (int i = 0; i < array.length; i++) {
-            int num = array[i];
-            int height = maxRodHeight / (max - min + 1) * (num - min + 1);
-            Rod rod = new Rod(height, "" + num);
+            final int num = array[i];
+            final int height = maxRodHeight / (max - min + 1) * (num - min + 1);
+            final Rod rod = new Rod(height, num);
             rods[i] = rod;
             add(rod);
 
@@ -51,5 +69,16 @@ public class SortingVisualization extends JPanel {
 
         revalidate();
         repaint();
+    }
+
+    @Override
+    public int get(int index, String label) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public void swap(int index1, int index2) {
+        // TODO Auto-generated method stub
     }
 }

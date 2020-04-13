@@ -20,7 +20,7 @@ public class Gui {
         sortingOptions = new SortingOptions();
         frame.add(sortingOptions, BorderLayout.NORTH);
 
-        sortingVisialization = new SortingVisualization();
+        sortingVisialization = new SortingVisualization(16);
         frame.add(sortingVisialization, BorderLayout.CENTER);
 
         sortingAlgorithmSelector = new SortingAlgorithmSelector();
