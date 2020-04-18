@@ -1,4 +1,4 @@
-package main.java.gui.reusable;
+package org.yagorundy.gui.reusable;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -26,7 +26,7 @@ public class Rod extends JPanel {
         setMaximumSize(new Dimension(maxWidth, height));
 
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        
+
         this.value = value;
 
         rod = new JPanel();

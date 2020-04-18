@@ -1,6 +1,6 @@
-package main.java;
+package org.yagorundy;
 
-import main.java.app.App;
+import org.yagorundy.app.App;
 
 class Main {
     public static void main(String[] args) {

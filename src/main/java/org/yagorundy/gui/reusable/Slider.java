@@ -1,4 +1,4 @@
-package main.java.gui.reusable;
+package org.yagorundy.gui.reusable;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -26,7 +26,7 @@ public class Slider extends JPanel {
 
         slider.setMinorTickSpacing(1);
         slider.setMajorTickSpacing((max - min) / 4);
-        
+
         slider.setPaintTicks(true);
         slider.setPaintLabels(true);
 

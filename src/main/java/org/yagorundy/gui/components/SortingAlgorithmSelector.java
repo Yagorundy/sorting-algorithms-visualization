@@ -1,4 +1,4 @@
-package main.java.gui.components;
+package org.yagorundy.gui.components;
 
 import java.awt.Color;
 

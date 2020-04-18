@@ -1,4 +1,4 @@
-package main.java.app;
+package org.yagorundy.app;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -6,8 +6,8 @@ import java.awt.event.ActionEvent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import main.java.algorithms.AlgorithmService;
-import main.java.gui.Gui;
+import org.yagorundy.algorithms.AlgorithmService;
+import org.yagorundy.gui.Gui;
 
 public class App {
     private final String appName = "Sorting Algorithms Visualization";
@@ -16,14 +16,14 @@ public class App {
     private Gui gui;
 
     private String selectedAlgorithm;
-    
+
     public App() {
         algorithmService = new AlgorithmService();
         gui = new Gui(appName);
-        
+
         // Assign initial array and available sorting algorithms
         gui.getSortingAlgorithmSelector().setAlgorithms(algorithmService.getSortingAlgorithms());
-        
+
         // SortingOptions events
         gui.getSortingOptions().getSortButton().addActionListener(this.onSortButtonClicked());
         gui.getSortingOptions().getElementsSlider().getSlider().addChangeListener(this.onElementsChanged());
@@ -32,7 +32,7 @@ public class App {
         // AlgorithmSelector events
         // Arrays.stream(gui.getSortingAlgorithmSelector().getButtons())
         //     .forEach(button -> button.addActionListener(this.onAlgorithmSelected()));
-        
+
         // Display app
         gui.show();
     }

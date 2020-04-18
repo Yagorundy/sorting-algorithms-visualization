@@ -1,6 +1,6 @@
-package main.java.algorithms;
+package org.yagorundy.algorithms;
 
-import main.java.shared.Sortable;
+import org.yagorundy.shared.Sortable;
 
 public interface SortingAlgorithm {
     public void sort(Sortable sortable);

@@ -1,4 +1,4 @@
-package main.java.shared;
+package org.yagorundy.shared;
 
 public interface Sortable {
     public int length();

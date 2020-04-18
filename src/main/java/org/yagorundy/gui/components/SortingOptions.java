@@ -1,13 +1,13 @@
-package main.java.gui.components;
+package org.yagorundy.gui.components;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import main.java.gui.reusable.Button;
-import main.java.gui.reusable.CheckBox;
-import main.java.gui.reusable.Slider;
+import org.yagorundy.gui.reusable.Button;
+import org.yagorundy.gui.reusable.CheckBox;
+import org.yagorundy.gui.reusable.Slider;
 
 public class SortingOptions extends JPanel {
     /**

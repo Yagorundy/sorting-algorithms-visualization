@@ -1,4 +1,4 @@
-package main.java.algorithms;
+package org.yagorundy.algorithms;
 
 public class AlgorithmService {
     public String[] getSortingAlgorithms() {

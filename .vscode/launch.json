@@ -8,7 +8,7 @@
             "type": "java",
             "name": "Debug",
             "request": "launch",
-            "mainClass": "main.java.Main",
+            "mainClass": "org.yagorundy.Main",
             "projectName": "sorting-algorithms-visualization"
         }
     ]

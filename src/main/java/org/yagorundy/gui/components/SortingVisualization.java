@@ -1,4 +1,4 @@
-package main.java.gui.components;
+package org.yagorundy.gui.components;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -10,8 +10,8 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import main.java.gui.reusable.Rod;
-import main.java.shared.Sortable;
+import org.yagorundy.gui.reusable.Rod;
+import org.yagorundy.shared.Sortable;
 
 public class SortingVisualization extends JPanel implements Sortable {
     /**
@@ -37,7 +37,7 @@ public class SortingVisualization extends JPanel implements Sortable {
 
     private int[] generateArray(int length, boolean uniqueElements) {
         Random random = new Random();
-        
+
         int[] array = new int[length];
         for (int i = 0; i < length; i++) {
             if (uniqueElements)

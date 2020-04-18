@@ -1,13 +1,13 @@
-package main.java.gui;
+package org.yagorundy.gui;
 
 import java.awt.BorderLayout;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
-import main.java.gui.components.SortingAlgorithmSelector;
-import main.java.gui.components.SortingOptions;
-import main.java.gui.components.SortingVisualization;
+import org.yagorundy.gui.components.SortingAlgorithmSelector;
+import org.yagorundy.gui.components.SortingOptions;
+import org.yagorundy.gui.components.SortingVisualization;
 
 public class Gui {
     private JFrame frame;
@@ -19,7 +19,7 @@ public class Gui {
     public Gui(String name) {
         frame = new JFrame(name);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        
+
         sortingOptions = new SortingOptions();
         frame.add(sortingOptions, BorderLayout.NORTH);
 

@@ -1,4 +1,4 @@
-package main.java.gui.reusable;
+package org.yagorundy.gui.reusable;
 
 import java.awt.Dimension;
 
