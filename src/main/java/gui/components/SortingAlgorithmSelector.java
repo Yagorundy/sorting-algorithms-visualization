@@ -1,6 +1,7 @@
-package src.gui.components;
+package main.java.gui.components;
 
 import java.awt.Color;
+
 import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;

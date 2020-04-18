@@ -1,13 +1,13 @@
-package src.gui;
+package main.java.gui;
 
 import java.awt.BorderLayout;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
-import src.gui.components.SortingAlgorithmSelector;
-import src.gui.components.SortingOptions;
-import src.gui.components.SortingVisualization;
+import main.java.gui.components.SortingAlgorithmSelector;
+import main.java.gui.components.SortingOptions;
+import main.java.gui.components.SortingVisualization;
 
 public class Gui {
     private JFrame frame;

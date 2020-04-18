@@ -1,4 +1,4 @@
-package src.app;
+package main.java.app;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -6,8 +6,8 @@ import java.awt.event.ActionEvent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import src.algorithms.AlgorithmService;
-import src.gui.Gui;
+import main.java.algorithms.AlgorithmService;
+import main.java.gui.Gui;
 
 public class App {
     private final String appName = "Sorting Algorithms Visualization";

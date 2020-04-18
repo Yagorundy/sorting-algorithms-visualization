@@ -1,8 +1,6 @@
-package src.algorithms;
+package main.java.algorithms;
 
 public class AlgorithmService {
-    // TODO
-
     public String[] getSortingAlgorithms() {
         return new String[] { "BubbleSort", "MergeSort" };
     }

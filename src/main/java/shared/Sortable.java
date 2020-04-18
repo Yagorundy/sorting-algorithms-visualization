@@ -1,4 +1,4 @@
-package src.shared;
+package main.java.shared;
 
 public interface Sortable {
     public int length();

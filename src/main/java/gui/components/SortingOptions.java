@@ -1,13 +1,13 @@
-package src.gui.components;
+package main.java.gui.components;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import src.gui.reusable.Button;
-import src.gui.reusable.CheckBox;
-import src.gui.reusable.Slider;
+import main.java.gui.reusable.Button;
+import main.java.gui.reusable.CheckBox;
+import main.java.gui.reusable.Slider;
 
 public class SortingOptions extends JPanel {
     /**

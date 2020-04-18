@@ -1,4 +1,4 @@
-package src.gui.reusable;
+package main.java.gui.reusable;
 
 import java.awt.Color;
 import java.awt.Dimension;

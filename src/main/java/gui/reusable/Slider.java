@@ -1,4 +1,4 @@
-package src.gui.reusable;
+package main.java.gui.reusable;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;

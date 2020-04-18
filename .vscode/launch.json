@@ -8,7 +8,8 @@
             "type": "java",
             "name": "Debug",
             "request": "launch",
-            "mainClass": "src.Main"
+            "mainClass": "main.java.Main",
+            "projectName": "sorting-algorithms-visualization"
         }
     ]
 }

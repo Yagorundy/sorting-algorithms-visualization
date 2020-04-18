@@ -1,4 +1,4 @@
-package src.gui.components;
+package main.java.gui.components;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -10,8 +10,8 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import src.gui.reusable.Rod;
-import src.shared.Sortable;
+import main.java.gui.reusable.Rod;
+import main.java.shared.Sortable;
 
 public class SortingVisualization extends JPanel implements Sortable {
     /**

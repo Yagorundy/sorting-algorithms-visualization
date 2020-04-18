@@ -1,6 +1,6 @@
-package src;
+package main.java;
 
-import src.app.App;
+import main.java.app.App;
 
 class Main {
     public static void main(String[] args) {

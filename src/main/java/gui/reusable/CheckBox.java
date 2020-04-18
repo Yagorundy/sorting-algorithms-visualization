@@ -1,6 +1,7 @@
-package src.gui.reusable;
+package main.java.gui.reusable;
 
 import java.awt.Dimension;
+
 import javax.swing.JCheckBox;
 
 public class CheckBox extends JCheckBox {

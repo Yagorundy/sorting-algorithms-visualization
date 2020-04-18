@@ -1,6 +1,6 @@
-package src.algorithms;
+package main.java.algorithms;
 
-import src.shared.Sortable;
+import main.java.shared.Sortable;
 
 public class BubbleSort implements SortingAlgorithm {
     @Override
