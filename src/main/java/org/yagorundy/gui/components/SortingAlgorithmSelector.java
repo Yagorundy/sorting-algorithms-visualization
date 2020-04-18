@@ -15,11 +15,9 @@ public class SortingAlgorithmSelector extends JPanel {
     private JRadioButton[] buttons;
     private ButtonGroup buttonGroup;
 
-    public SortingAlgorithmSelector() {
+    public SortingAlgorithmSelector(String[] algorithms) {
         setBackground(Color.RED);
-    }
 
-    public void setAlgorithms(String[] algorithms) {
         buttons = new JRadioButton[algorithms.length];
         buttonGroup = new ButtonGroup();
         for (int i = 0; i < algorithms.length; i++) {
@@ -28,9 +26,15 @@ public class SortingAlgorithmSelector extends JPanel {
             buttonGroup.add(button);
             add(button);
         }
+        buttons[0].setSelected(true);
     }
 
-    public JRadioButton[] getButtons() {
-        return buttons;
+    public String getSelectedButton() {
+        for (JRadioButton button : buttons) {
+            if (button.isSelected()) {
+                return button.getText();
+            }
+        }
+        return "";
     }
 }

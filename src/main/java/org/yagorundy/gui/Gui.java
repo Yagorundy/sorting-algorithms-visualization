@@ -16,7 +16,7 @@ public class Gui {
     private SortingVisualization sortingVisialization;
     private SortingAlgorithmSelector sortingAlgorithmSelector;
 
-    public Gui(String name) {
+    public Gui(String name, String[] sortingAlgorithms) {
         frame = new JFrame(name);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
@@ -26,7 +26,7 @@ public class Gui {
         sortingVisialization = new SortingVisualization(16, true);
         frame.add(sortingVisialization, BorderLayout.CENTER);
 
-        sortingAlgorithmSelector = new SortingAlgorithmSelector();
+        sortingAlgorithmSelector = new SortingAlgorithmSelector(sortingAlgorithms);
         frame.add(sortingAlgorithmSelector, BorderLayout.SOUTH);
     }
 

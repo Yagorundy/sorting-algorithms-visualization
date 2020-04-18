@@ -8,6 +8,7 @@ import javax.swing.event.ChangeListener;
 
 import org.yagorundy.algorithms.AlgorithmService;
 import org.yagorundy.gui.Gui;
+import org.yagorundy.shared.Sortable;
 
 public class App {
     private final String appName = "Sorting Algorithms Visualization";
@@ -15,61 +16,52 @@ public class App {
     private AlgorithmService algorithmService;
     private Gui gui;
 
-    private String selectedAlgorithm;
-
     public App() {
         algorithmService = new AlgorithmService();
-        gui = new Gui(appName);
-
-        // Assign initial array and available sorting algorithms
-        gui.getSortingAlgorithmSelector().setAlgorithms(algorithmService.getSortingAlgorithms());
+        gui = new Gui(appName, algorithmService.getSortingAlgorithms());
 
         // SortingOptions events
         gui.getSortingOptions().getSortButton().addActionListener(this.onSortButtonClicked());
         gui.getSortingOptions().getElementsSlider().getSlider().addChangeListener(this.onElementsChanged());
         gui.getSortingOptions().getShuffleButton().addActionListener(this.onShuffleButtonClicked());
 
-        // AlgorithmSelector events
-        // Arrays.stream(gui.getSortingAlgorithmSelector().getButtons())
-        //     .forEach(button -> button.addActionListener(this.onAlgorithmSelected()));
-
         // Display app
         gui.show();
     }
 
+    private void sort() {
+        String algorithmName = this.gui.getSortingAlgorithmSelector().getSelectedButton();
+        Sortable sortable = this.gui.getSortingVisualization();
+        algorithmService.startSorting(algorithmName, sortable);
+    }
+
+    private void shuffle() {
+        int elements = this.gui.getSortingOptions().getElementsSlider().getSlider().getValue();
+        boolean uniqueElements = this.gui.getSortingOptions().getUniqueCheckBox().isSelected();
+        this.gui.getSortingVisualization().shuffle(elements, uniqueElements);
+    }
+
     private ActionListener onSortButtonClicked() {
-        App self = this;
         return new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                System.out.println(self.selectedAlgorithm);
+                sort();
             }
         };
     }
 
     private ActionListener onShuffleButtonClicked() {
-        App self = this;
         return new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                self.gui.getSortingVisualization().shuffle(self.gui.getSortingOptions().getElementsSlider().getSlider().getValue(), self.gui.getSortingOptions().getUniqueCheckBox().isSelected());
+                shuffle();
             }
         };
     }
 
     private ChangeListener onElementsChanged() {
-        App self = this;
         return new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
-                self.gui.getSortingVisualization().shuffle(self.gui.getSortingOptions().getElementsSlider().getSlider().getValue(), self.gui.getSortingOptions().getUniqueCheckBox().isSelected());
+                shuffle();
             }
         };
     }
-
-    // private ActionListener onAlgorithmSelected() {
-    //     App self = this;
-    //     return new ActionListener() {
-    //         public void actionPerformed(ActionEvent e) {
-    //             System.out.println();
-    //         }
-    //     };
-    // }
 }

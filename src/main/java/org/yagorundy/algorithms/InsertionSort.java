@@ -2,10 +2,10 @@ package org.yagorundy.algorithms;
 
 import org.yagorundy.shared.Sortable;
 
-public class BubbleSort implements SortingAlgorithm {
+public class InsertionSort implements SortingAlgorithm {
     @Override
     public void sort(Sortable sortable) {
-        System.out.println("bubble sort");
-        // TODO - implement
+        System.out.println("insertion sort");
+        // - TODO
     }
 }
