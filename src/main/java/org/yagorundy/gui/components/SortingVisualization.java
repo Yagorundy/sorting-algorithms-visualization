@@ -19,8 +19,6 @@ public class SortingVisualization extends JPanel implements Sortable {
      */
     private static final long serialVersionUID = 7693365261886603164L;
 
-    private final int maxRodHeight = 1024;
-
     private static final Dimension minRodFilter = new Dimension(15, 0);
     private static final Dimension prefRodFilter = new Dimension(30, 0);
     private static final Dimension maxRodSpace = new Dimension(42069, 0);
@@ -68,8 +66,8 @@ public class SortingVisualization extends JPanel implements Sortable {
         rods = new Rod[array.length];
         for (int i = 0; i < array.length; i++) {
             int num = array[i];
-            int height = maxRodHeight / (max - min + 1) * (num - min + 1);
-            Rod rod = new Rod(height, num);
+
+            Rod rod = new Rod(num, min, max);
             rods[i] = rod;
             add(rod);
 
@@ -88,12 +86,13 @@ public class SortingVisualization extends JPanel implements Sortable {
 
     @Override
     public int get(int index, String label) {
-        // TODO Auto-generated method stub
-        return 0;
+        return this.rods[index].getValue();
     }
 
     @Override
     public void swap(int index1, int index2) {
-        // TODO Auto-generated method stub
+        int t = rods[index1].getValue();
+        rods[index1].setValue(rods[index2].getValue());
+        rods[index2].setValue(t);
     }
 }

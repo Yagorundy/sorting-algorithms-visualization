@@ -5,7 +5,12 @@ import org.yagorundy.shared.Sortable;
 public class BubbleSort implements SortingAlgorithm {
     @Override
     public void sort(Sortable sortable) {
-        System.out.println("bubble sort");
-        // TODO - implement
+        for (int i = 0; i < sortable.length(); i++) {
+            for (int j = 0; j < sortable.length(); j++) {
+                if (sortable.get(i, "1") < sortable.get(j, "2")) {
+                    sortable.swap(i, j);
+                }
+            }
+        }
     }
 }
