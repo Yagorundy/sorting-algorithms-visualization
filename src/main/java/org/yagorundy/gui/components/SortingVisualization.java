@@ -19,11 +19,16 @@ public class SortingVisualization extends JPanel implements Sortable {
      */
     private static final long serialVersionUID = 7693365261886603164L;
 
+    private static final int maxRodHeight = 1024;
+    private static final Color defaultRodColor = Color.YELLOW;
+
     private static final Dimension minRodFilter = new Dimension(15, 0);
     private static final Dimension prefRodFilter = new Dimension(30, 0);
     private static final Dimension maxRodSpace = new Dimension(42069, 0);
 
-    private Rod[] rods;
+    private Rod<Integer>[] rods;
+    private int minValue;
+    private int maxValue;
 
     public SortingVisualization(int length, boolean uniqueElements) {
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
@@ -58,16 +63,14 @@ public class SortingVisualization extends JPanel implements Sortable {
     public void shuffle(int length, boolean uniqueElements) {
         removeAll();
 
-        int[] array = this.generateArray(length, uniqueElements);
+        int[] array = generateArray(length, uniqueElements);
 
-        int min = Arrays.stream(array).min().getAsInt();
-        int max = Arrays.stream(array).max().getAsInt();
+        minValue = Arrays.stream(array).min().getAsInt();
+        maxValue = Arrays.stream(array).max().getAsInt();
 
-        rods = new Rod[array.length];
+        rods = (Rod<Integer>[]) new Rod[array.length];
         for (int i = 0; i < array.length; i++) {
-            int num = array[i];
-
-            Rod rod = new Rod(num, min, max);
+            Rod<Integer> rod = new Rod<Integer>(array[i], getRodHeight(array[i]), defaultRodColor);
             rods[i] = rod;
             add(rod);
 
@@ -79,20 +82,48 @@ public class SortingVisualization extends JPanel implements Sortable {
         repaint();
     }
 
+    private int getRodHeight(int value) {
+        return maxRodHeight / (maxValue - minValue + 1) * (value - minValue + 1);
+    }
+
+    private void refresh() {
+        for (Rod<Integer> rod : rods) rod.setHeight(getRodHeight(rod.getValue()));
+    }
+
     @Override
     public int length() {
         return rods.length;
     }
 
     @Override
-    public int get(int index, String label) {
-        return this.rods[index].getValue();
+    public int get(int index) {
+        return rods[index].getValue();
+    }
+
+    @Override
+    public void set(int index, int value) {
+        rods[index].setValue(value);
+
+        if (value > maxValue) {
+            maxValue = value;
+            refresh();
+        } else if (value < minValue) {
+            minValue = value;
+            refresh();
+        } else {
+            rods[index].setHeight(getRodHeight(value));
+        }
     }
 
     @Override
     public void swap(int index1, int index2) {
-        int t = rods[index1].getValue();
-        rods[index1].setValue(rods[index2].getValue());
-        rods[index2].setValue(t);
+        int t = get(index1);
+        set(index1, get(index2));
+        set(index2, t);
+    }
+
+    @Override
+    public void markSorted(int index) {
+        rods[index].setColor(Color.CYAN);
     }
 }

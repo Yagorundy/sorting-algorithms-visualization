@@ -8,7 +8,7 @@ public class SelectionSort implements SortingAlgorithm {
         for (int i = 0; i < sortable.length() - 1; i++) {
             int minIndex = i;
             for (int j = i + 1; j < sortable.length(); j++) {
-                if (sortable.get(j, "1") < sortable.get(minIndex, "2")) {
+                if (sortable.get(j) < sortable.get(minIndex)) {
                     minIndex = j;
                 }
             }

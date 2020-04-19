@@ -10,7 +10,7 @@ public class BubbleSort implements SortingAlgorithm {
         do {
             swapped = false;
             for (int i = 1; i <= lastUnsortedIndex; i++) {
-                if (sortable.get(i - 1, "left") > sortable.get(i, "right")) {
+                if (sortable.get(i - 1) > sortable.get(i)) {
                     sortable.swap(i - 1, i);
                     swapped = true;
                 }
