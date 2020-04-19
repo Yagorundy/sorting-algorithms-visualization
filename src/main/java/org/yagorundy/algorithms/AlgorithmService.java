@@ -1,12 +1,14 @@
 package org.yagorundy.algorithms;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 import java.util.Set;
 
 import org.reflections.Reflections;
 import org.yagorundy.shared.Sortable;
 
 public class AlgorithmService {
+    private Thread sortingThread;
+
     private Set<Class<? extends SortingAlgorithm>> getSortingClasses() {
         Reflections reflections = new Reflections(this.getClass().getPackage().getName());
         return reflections.getSubTypesOf(SortingAlgorithm.class);
@@ -29,9 +31,12 @@ public class AlgorithmService {
                 .filter(c -> c.getSimpleName().equals(algorithmName))
                 .findFirst()
                 .get();
-            Method sortingMethod = algorithmClass.getMethod("sort", new Class[] { Sortable.class });
-            Object instance = algorithmClass.newInstance();
-            sortingMethod.invoke(instance, new Object[] { sortable });
+
+            Constructor<? extends SortingAlgorithm> constructor = algorithmClass.getConstructor(new Class[] { Sortable.class, long.class });
+            Runnable instance = (Runnable) constructor.newInstance(new Object[] { sortable, 1000L });   // TODO - remove hardcoded value
+
+            sortingThread = new Thread(instance);
+            sortingThread.start();
         } catch (Exception e) {
             e.printStackTrace();
         }

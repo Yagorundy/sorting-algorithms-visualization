@@ -2,9 +2,13 @@ package org.yagorundy.algorithms;
 
 import org.yagorundy.shared.Sortable;
 
-public class InsertionSort implements SortingAlgorithm {
+public class InsertionSort extends SortingAlgorithm {
+    public InsertionSort(Sortable sortable, long delay) {
+        super(sortable, delay);
+    }
+
     @Override
-    public void sort(Sortable sortable) {
+    public void run() {
         sortable.markSorted(0);
         for (int i = 1; i < sortable.length(); i++) {
             int key = sortable.get(i);

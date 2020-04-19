@@ -2,9 +2,13 @@ package org.yagorundy.algorithms;
 
 import org.yagorundy.shared.Sortable;
 
-public class BubbleSort implements SortingAlgorithm {
+public class BubbleSort extends SortingAlgorithm {
+    public BubbleSort(Sortable sortable, long delay) {
+        super(sortable, delay);
+    }
+
     @Override
-    public void sort(Sortable sortable) {
+    public void run() {
         boolean swapped = false;
         int lastUnsortedIndex = sortable.length() - 1;
         do {
@@ -16,6 +20,7 @@ public class BubbleSort implements SortingAlgorithm {
                 }
             }
             sortable.markSorted(lastUnsortedIndex--);
+            sleep();
         } while (swapped);
     }
 }

@@ -2,9 +2,13 @@ package org.yagorundy.algorithms;
 
 import org.yagorundy.shared.Sortable;
 
-public class SelectionSort implements SortingAlgorithm {
+public class SelectionSort extends SortingAlgorithm {
+    public SelectionSort(Sortable sortable, long delay) {
+        super(sortable, delay);
+    }
+
     @Override
-    public void sort(Sortable sortable) {
+    public void run() {
         for (int i = 0; i < sortable.length() - 1; i++) {
             int minIndex = i;
             for (int j = i + 1; j < sortable.length(); j++) {
