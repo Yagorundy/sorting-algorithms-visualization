@@ -23,7 +23,7 @@ public class App {
         // SortingOptions events
         gui.getSortingOptions().getSortButton().addActionListener(this.onSortButtonClicked());
         gui.getSortingOptions().getElementsSlider().getSlider().addChangeListener(this.onElementsChanged());
-        gui.getSortingOptions().getSpeedSlider().getSlider().addChangeListener(this.onSpeedChanged());
+        gui.getSortingOptions().getDelaySlider().getSlider().addChangeListener(this.onSpeedChanged());
         gui.getSortingOptions().getShuffleButton().addActionListener(this.onShuffleButtonClicked());
 
         // Display app
@@ -33,8 +33,8 @@ public class App {
     private void sort() {
         String algorithmName = this.gui.getSortingAlgorithmSelector().getSelectedButton();
         Sortable sortable = this.gui.getSortingVisualization();
-        long speed = this.gui.getSortingOptions().getSpeedSlider().getSlider().getValue();
-        algorithmService.startSorting(algorithmName, sortable, speed);
+        long delay = this.gui.getSortingOptions().getDelaySlider().getSlider().getValue();
+        algorithmService.startSorting(algorithmName, sortable, delay);
     }
 
     private void shuffle() {
@@ -70,7 +70,7 @@ public class App {
     private ChangeListener onSpeedChanged() {
         return new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
-                algorithmService.setDelay(gui.getSortingOptions().getSpeedSlider().getSlider().getValue());
+                algorithmService.setDelay(gui.getSortingOptions().getDelaySlider().getSlider().getValue());
             }
         };
     }

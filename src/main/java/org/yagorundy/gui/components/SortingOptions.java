@@ -25,7 +25,7 @@ public class SortingOptions extends JPanel {
 
     private Button sortButton;
     private Slider elementsSlider;
-    private Slider speedSlider;
+    private Slider delaySlider;
     private CheckBox uniqueCheckBox;
     private Button shuffleButton;
 
@@ -35,7 +35,7 @@ public class SortingOptions extends JPanel {
 
         sortButton = new Button("Sort");
         elementsSlider = new Slider(minElements, maxElements, initialElements, "Number of elements", 1, (maxElements - minElements) / 4);
-        speedSlider = new Slider(minSpeed, maxSpeed, initialSpeed, "Speed");
+        delaySlider = new Slider(minSpeed, maxSpeed, initialSpeed, "Delay");
         uniqueCheckBox = new CheckBox("Unique elements", true);
         shuffleButton = new Button("Shuffle");
 
@@ -43,7 +43,7 @@ public class SortingOptions extends JPanel {
         add(Box.createHorizontalGlue());
         add(elementsSlider);
         add(Box.createHorizontalGlue());
-        add(speedSlider);
+        add(delaySlider);
         add(Box.createHorizontalGlue());
         add(uniqueCheckBox);
         add(Box.createHorizontalGlue());
@@ -58,8 +58,8 @@ public class SortingOptions extends JPanel {
         return elementsSlider;
     }
 
-    public Slider getSpeedSlider() {
-        return speedSlider;
+    public Slider getDelaySlider() {
+        return delaySlider;
     }
 
     public CheckBox getUniqueCheckBox() {

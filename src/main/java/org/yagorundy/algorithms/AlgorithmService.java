@@ -25,7 +25,7 @@ public class AlgorithmService {
         return result;
     }
 
-    public void startSorting(String algorithmName, Sortable sortable, long speed) {
+    public void startSorting(String algorithmName, Sortable sortable, long delay) {
         try {
             Class<? extends SortingAlgorithm> algorithmClass = this.getSortingClasses()
                 .stream()
@@ -34,7 +34,7 @@ public class AlgorithmService {
                 .get();
 
             Constructor<? extends SortingAlgorithm> constructor = algorithmClass.getConstructor(new Class[] { Sortable.class, long.class });
-            sortingAlgorithmInstance = (SortingAlgorithm) constructor.newInstance(new Object[] { sortable, speed });
+            sortingAlgorithmInstance = (SortingAlgorithm) constructor.newInstance(new Object[] { sortable, delay });
 
             sortingThread = new Thread(sortingAlgorithmInstance);
             sortingThread.start();
