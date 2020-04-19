@@ -37,5 +37,6 @@ public class InsertionSort extends SortingAlgorithm {
                 sortable.markSorted(k);
             sleep();
         }
+        unmark();
     }
 }

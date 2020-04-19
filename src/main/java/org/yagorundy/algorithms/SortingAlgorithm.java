@@ -18,4 +18,17 @@ public abstract class SortingAlgorithm implements Runnable {
             e.printStackTrace();
         }
     }
+
+    protected void unmark() {
+        for (int i = 0; i < sortable.length(); i++)
+            sortable.unmark(i);
+    }
+
+    public long getDelay() {
+        return delay;
+    }
+
+    public void setDelay(long delay) {
+        this.delay = delay;
+    }
 }

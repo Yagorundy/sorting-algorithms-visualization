@@ -15,8 +15,17 @@ public class SortingOptions extends JPanel {
      */
     private static final long serialVersionUID = 8547027486739886564L;
 
+    private static final int minElements = 6;
+    private static final int maxElements = 42;
+    private static final int initialElements = 16;
+
+    private static final int minSpeed = 10;
+    private static final int maxSpeed = 1000;
+    private static final int initialSpeed = 500;
+
     private Button sortButton;
     private Slider elementsSlider;
+    private Slider speedSlider;
     private CheckBox uniqueCheckBox;
     private Button shuffleButton;
 
@@ -25,13 +34,16 @@ public class SortingOptions extends JPanel {
         setBorder(new EmptyBorder(50, 50, 50, 50));
 
         sortButton = new Button("Sort");
-        elementsSlider = new Slider("Huq");
+        elementsSlider = new Slider(minElements, maxElements, initialElements, "Number of elements", 1, (maxElements - minElements) / 4);
+        speedSlider = new Slider(minSpeed, maxSpeed, initialSpeed, "Speed");
         uniqueCheckBox = new CheckBox("Unique elements", true);
         shuffleButton = new Button("Shuffle");
 
         add(sortButton);
         add(Box.createHorizontalGlue());
         add(elementsSlider);
+        add(Box.createHorizontalGlue());
+        add(speedSlider);
         add(Box.createHorizontalGlue());
         add(uniqueCheckBox);
         add(Box.createHorizontalGlue());
@@ -44,6 +56,10 @@ public class SortingOptions extends JPanel {
 
     public Slider getElementsSlider() {
         return elementsSlider;
+    }
+
+    public Slider getSpeedSlider() {
+        return speedSlider;
     }
 
     public CheckBox getUniqueCheckBox() {

@@ -27,5 +27,6 @@ public class BubbleSort extends SortingAlgorithm {
             sortable.markSorted(lastUnsortedIndex--);
             sleep();
         } while (swapped);
+        unmark();
     }
 }

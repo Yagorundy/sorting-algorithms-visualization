@@ -36,5 +36,6 @@ public class SelectionSort extends SortingAlgorithm {
             sortable.markSorted(i);
             sleep();
         }
+        unmark();
     }
 }
