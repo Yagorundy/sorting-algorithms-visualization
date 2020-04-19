@@ -14,10 +14,15 @@ public class BubbleSort extends SortingAlgorithm {
         do {
             swapped = false;
             for (int i = 1; i <= lastUnsortedIndex; i++) {
+                sortable.markComparator(i - 1, i);
+                sleep();
+
                 if (sortable.get(i - 1) > sortable.get(i)) {
                     sortable.swap(i - 1, i);
                     swapped = true;
+                    sleep();
                 }
+                sortable.unmark(i - 1, i);
             }
             sortable.markSorted(lastUnsortedIndex--);
             sleep();

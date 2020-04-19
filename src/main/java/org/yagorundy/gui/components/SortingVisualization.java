@@ -20,7 +20,11 @@ public class SortingVisualization extends JPanel implements Sortable {
     private static final long serialVersionUID = 7693365261886603164L;
 
     private static final int maxRodHeight = 1024;
-    private static final Color defaultRodColor = Color.YELLOW;
+
+    public final static Color defaultRodColor = Color.YELLOW;
+    public final static Color comparatorRodColor = Color.PINK;
+    public final static Color superlativeRodColor = Color.RED;
+    public final static Color sortedRodColor = Color.CYAN;
 
     private static final Dimension minRodFilter = new Dimension(15, 0);
     private static final Dimension prefRodFilter = new Dimension(30, 0);
@@ -87,7 +91,8 @@ public class SortingVisualization extends JPanel implements Sortable {
     }
 
     private void refresh() {
-        for (Rod<Integer> rod : rods) rod.setHeight(getRodHeight(rod.getValue()));
+        for (Rod<Integer> rod : rods)
+            rod.setHeight(getRodHeight(rod.getValue()));
     }
 
     @Override
@@ -122,8 +127,28 @@ public class SortingVisualization extends JPanel implements Sortable {
         set(index2, t);
     }
 
+    private void mark(Color color, int ...indexes) {
+        for (int index : indexes)
+            rods[index].setColor(color);
+    }
+
     @Override
-    public void markSorted(int index) {
-        rods[index].setColor(Color.CYAN);
+    public void markComparator(int ...indexes) {
+        mark(comparatorRodColor, indexes);
+    }
+
+    @Override
+    public void markSuperlative(int ...indexes) {
+        mark(superlativeRodColor, indexes);
+    }
+
+    @Override
+    public void markSorted(int ...indexes) {
+        mark(sortedRodColor, indexes);
+    }
+
+    @Override
+    public void unmark(int ...indexes) {
+        mark(defaultRodColor, indexes);
     }
 }

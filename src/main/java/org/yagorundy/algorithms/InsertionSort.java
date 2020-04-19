@@ -10,15 +10,32 @@ public class InsertionSort extends SortingAlgorithm {
     @Override
     public void run() {
         sortable.markSorted(0);
+        sleep();
+
         for (int i = 1; i < sortable.length(); i++) {
             int key = sortable.get(i);
-            int j = i - 1;
+            sortable.markSuperlative(i);
+            sleep();
 
-            for (; j >= 0 && sortable.get(j) > key; j--) {
-                sortable.set(j + 1, sortable.get(j));
+            int j = i - 1;
+            while (j >= 0) {
+                sortable.markComparator(j);
+                sleep();
+
+                if (sortable.get(j) > key) {
+                    sortable.swap(j + 1, j);
+                    sortable.markSuperlative(j);
+                    sortable.markSorted(j + 1);
+                    sleep();
+                } else {
+                    break;
+                }
+                j--;
             }
-            sortable.set(j + 1, key);
-            sortable.markSorted(j + 1);
+
+            for (int k = 0; k <= i; k++)
+                sortable.markSorted(k);
+            sleep();
         }
     }
 }

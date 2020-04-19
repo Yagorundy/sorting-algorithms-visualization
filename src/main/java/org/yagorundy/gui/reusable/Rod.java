@@ -59,6 +59,10 @@ public class Rod<T> extends JPanel {
         setMaximumSize(new Dimension(maxWidth, height));
     }
 
+    public Color getColor() {
+        return rod.getBackground();
+    }
+
     public void setColor(Color color) {
         rod.setBackground(color);
     }

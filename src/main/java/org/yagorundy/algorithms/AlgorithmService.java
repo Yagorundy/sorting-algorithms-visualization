@@ -33,7 +33,7 @@ public class AlgorithmService {
                 .get();
 
             Constructor<? extends SortingAlgorithm> constructor = algorithmClass.getConstructor(new Class[] { Sortable.class, long.class });
-            Runnable instance = (Runnable) constructor.newInstance(new Object[] { sortable, 1000L });   // TODO - remove hardcoded value
+            Runnable instance = (Runnable) constructor.newInstance(new Object[] { sortable, 100L });   // TODO - remove hardcoded value
 
             sortingThread = new Thread(instance);
             sortingThread.start();
