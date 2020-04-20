@@ -19,9 +19,9 @@ public class SortingOptions extends JPanel {
     private static final int maxElements = 42;
     private static final int initialElements = 16;
 
-    private static final int minSpeed = 10;
+    private static final int minSpeed = 20;
     private static final int maxSpeed = 1000;
-    private static final int initialSpeed = 500;
+    private static final int initialSpeed = 400;
 
     private Button sortButton;
     private Slider elementsSlider;

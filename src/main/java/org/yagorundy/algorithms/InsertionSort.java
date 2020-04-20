@@ -19,7 +19,7 @@ public class InsertionSort extends SortingAlgorithm {
 
             int j = i - 1;
             while (j >= 0) {
-                sortable.markComparator(j);
+                sortable.markComparative(j);
                 sleep();
 
                 if (sortable.get(j) > key) {

@@ -15,7 +15,7 @@ public class SelectionSort extends SortingAlgorithm {
             sleep();
 
             for (int j = i + 1; j < sortable.length(); j++) {
-                sortable.markComparator(j);
+                sortable.markComparative(j);
                 sleep();
 
                 if (sortable.get(j) < sortable.get(minIndex)) {

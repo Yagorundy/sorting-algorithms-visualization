@@ -22,7 +22,8 @@ public class SortingVisualization extends JPanel implements Sortable {
     private static final int maxRodHeight = 1024;
 
     public final static Color defaultRodColor = Color.YELLOW;
-    public final static Color comparatorRodColor = Color.PINK;
+    public final static Color comparativeRodColor = Color.PINK;
+    public final static Color comparativeAltRodColor = Color.GRAY;
     public final static Color superlativeRodColor = Color.RED;
     public final static Color sortedRodColor = Color.CYAN;
 
@@ -125,6 +126,10 @@ public class SortingVisualization extends JPanel implements Sortable {
         int t = get(index1);
         set(index1, get(index2));
         set(index2, t);
+
+        Color tc = rods[index1].getColor();
+        rods[index1].setColor(rods[index2].getColor());
+        rods[index2].setColor(tc);
     }
 
     private void mark(Color color, int ...indexes) {
@@ -133,8 +138,13 @@ public class SortingVisualization extends JPanel implements Sortable {
     }
 
     @Override
-    public void markComparator(int ...indexes) {
-        mark(comparatorRodColor, indexes);
+    public void markComparative(int ...indexes) {
+        markComparative(false, indexes);
+    }
+
+    @Override
+    public void markComparative(boolean isAlt, int ...indexes) {
+        mark(isAlt ? comparativeAltRodColor : comparativeRodColor, indexes);
     }
 
     @Override

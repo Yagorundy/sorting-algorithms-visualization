@@ -8,7 +8,9 @@ public interface Sortable {
 
     public void swap(int index1, int index2);
 
-    public void markComparator(int ...indexes);
+    public void markComparative(int ...indexes);
+    public void markComparative(boolean isAlt, int ...indexes);
+
     public void markSuperlative(int ...indexes);
     public void markSorted(int ...indexes);
     public void unmark(int ...indexes);
