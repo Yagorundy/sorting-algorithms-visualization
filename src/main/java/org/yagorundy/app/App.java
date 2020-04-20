@@ -38,6 +38,7 @@ public class App {
     }
 
     private void shuffle() {
+        algorithmService.stopSorting();
         int elements = this.gui.getSortingOptions().getElementsSlider().getSlider().getValue();
         boolean uniqueElements = this.gui.getSortingOptions().getUniqueCheckBox().isSelected();
         this.gui.getSortingVisualization().shuffle(elements, uniqueElements);

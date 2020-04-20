@@ -7,7 +7,7 @@ import org.reflections.Reflections;
 import org.yagorundy.shared.Sortable;
 
 public class AlgorithmService {
-    private SortingAlgorithm sortingAlgorithmInstance;
+    private SortingAlgorithm algorithmInstance;
     private Thread sortingThread;
 
     private Set<Class<? extends SortingAlgorithm>> getSortingClasses() {
@@ -26,26 +26,35 @@ public class AlgorithmService {
     }
 
     public void startSorting(String algorithmName, Sortable sortable, long delay) {
-        try {
-            Class<? extends SortingAlgorithm> algorithmClass = this.getSortingClasses()
-                .stream()
-                .filter(c -> c.getSimpleName().equals(algorithmName))
-                .findFirst()
-                .get();
+        if (sortingThread == null || !sortingThread.isAlive()) {
+            try {
+                Class<? extends SortingAlgorithm> algorithmClass = this.getSortingClasses()
+                    .stream()
+                    .filter(c -> c.getSimpleName().equals(algorithmName))
+                    .findFirst()
+                    .get();
 
-            Constructor<? extends SortingAlgorithm> constructor = algorithmClass.getConstructor(new Class[] { Sortable.class, long.class });
-            sortingAlgorithmInstance = (SortingAlgorithm) constructor.newInstance(new Object[] { sortable, delay });
+                Constructor<? extends SortingAlgorithm> constructor = algorithmClass.getConstructor(new Class[] { Sortable.class, long.class });
+                algorithmInstance = (SortingAlgorithm) constructor.newInstance(new Object[] { sortable, delay });
 
-            sortingThread = new Thread(sortingAlgorithmInstance);
-            sortingThread.start();
-        } catch (Exception e) {
-            e.printStackTrace();
+                sortingThread = new Thread(algorithmInstance);
+                sortingThread.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void stopSorting() {
+        if (sortingThread != null && sortingThread.isAlive()) {
+            sortingThread.stop();
+            algorithmInstance.unmark();
         }
     }
 
     public void setDelay(long delay) {
-        if (sortingAlgorithmInstance != null) {
-            sortingAlgorithmInstance.setDelay(delay);
+        if (algorithmInstance != null) {
+            algorithmInstance.setDelay(delay);
         }
     }
 }
