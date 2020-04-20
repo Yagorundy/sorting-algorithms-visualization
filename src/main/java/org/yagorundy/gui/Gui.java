@@ -8,6 +8,7 @@ import javax.swing.WindowConstants;
 import org.yagorundy.gui.components.SortingAlgorithmSelector;
 import org.yagorundy.gui.components.SortingOptions;
 import org.yagorundy.gui.components.SortingVisualization;
+import org.yagorundy.gui.constants.GuiConstants;
 
 public class Gui {
     private JFrame frame;
@@ -18,6 +19,7 @@ public class Gui {
 
     public Gui(String name, String[] sortingAlgorithms) {
         frame = new JFrame(name);
+        frame.setSize(GuiConstants.prefWidth, GuiConstants.prefHeight);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         sortingOptions = new SortingOptions();

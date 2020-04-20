@@ -1,8 +1,8 @@
 package org.yagorundy.gui.reusable;
 
-import java.awt.Dimension;
-
 import javax.swing.JCheckBox;
+
+import org.yagorundy.gui.constants.GuiConstants;
 
 public class CheckBox extends JCheckBox {
     /**
@@ -12,8 +12,8 @@ public class CheckBox extends JCheckBox {
 
     public CheckBox(String text, boolean isChecked) {
         super(text, isChecked);
-        Dimension size = new Dimension(150, 110);
-        setMaximumSize(size);
-        setPreferredSize(size);
+        setFont(GuiConstants.font);
+        setMaximumSize(GuiConstants.checkBoxSize);
+        setPreferredSize(GuiConstants.checkBoxSize);
     }
 }

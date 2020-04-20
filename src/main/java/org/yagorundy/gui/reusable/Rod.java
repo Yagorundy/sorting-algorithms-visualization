@@ -3,9 +3,9 @@ package org.yagorundy.gui.reusable;
 import java.awt.Color;
 import java.awt.Dimension;
 
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+
+import org.yagorundy.gui.constants.GuiConstants;
 
 public class Rod<T> extends JPanel {
     /**
@@ -16,19 +16,11 @@ public class Rod<T> extends JPanel {
     private T value;
     private int height;
 
-    private JPanel rod;
-    private JLabel label;
-
-    private static final int prefWidth = 75;
-    private static final int maxWidth = 100;
-
     public Rod(T value, int height, Color color) {
         setAlignmentY(BOTTOM_ALIGNMENT);
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         setHeight(height);
         setColor(color);
-
         setValue(value);
     }
 
@@ -37,12 +29,7 @@ public class Rod<T> extends JPanel {
     }
 
     public void setValue(T value) {
-        if (label == null) {
-            label = new JLabel("", JLabel.CENTER);
-            add(label);
-        }
         this.value = value;
-        label.setText(value.toString());
     }
 
     public int getHeight() {
@@ -50,20 +37,19 @@ public class Rod<T> extends JPanel {
     }
 
     public void setHeight(int height) {
-        if (rod == null) {
-            rod = new JPanel();
-            add(rod);
-        }
         this.height = height;
-        setPreferredSize(new Dimension(prefWidth, height));
-        setMaximumSize(new Dimension(maxWidth, height));
+        setPreferredSize(new Dimension(GuiConstants.prefRodWidth, height));
+        setMaximumSize(new Dimension(GuiConstants.maxRodWidth, height));
+
+        revalidate();
+        repaint();
     }
 
     public Color getColor() {
-        return rod.getBackground();
+        return getBackground();
     }
 
     public void setColor(Color color) {
-        rod.setBackground(color);
+        setBackground(color);
     }
 }

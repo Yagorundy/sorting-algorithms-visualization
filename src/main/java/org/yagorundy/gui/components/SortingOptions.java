@@ -15,11 +15,11 @@ public class SortingOptions extends JPanel {
      */
     private static final long serialVersionUID = 8547027486739886564L;
 
-    private static final int minElements = 6;
-    private static final int maxElements = 42;
+    private static final int minElements = 8;
+    private static final int maxElements = 80;
     private static final int initialElements = 16;
 
-    private static final int minSpeed = 20;
+    private static final int minSpeed = 10;
     private static final int maxSpeed = 1000;
     private static final int initialSpeed = 400;
 
@@ -36,7 +36,7 @@ public class SortingOptions extends JPanel {
         sortButton = new Button("Sort");
         elementsSlider = new Slider(minElements, maxElements, initialElements, "Number of elements", 1, (maxElements - minElements) / 4);
         delaySlider = new Slider(minSpeed, maxSpeed, initialSpeed, "Delay");
-        uniqueCheckBox = new CheckBox("Unique elements", true);
+        uniqueCheckBox = new CheckBox("Unique", true);
         shuffleButton = new Button("Shuffle");
 
         add(sortButton);

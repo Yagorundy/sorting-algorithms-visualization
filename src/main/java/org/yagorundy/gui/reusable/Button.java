@@ -1,8 +1,8 @@
 package org.yagorundy.gui.reusable;
 
-import java.awt.Dimension;
-
 import javax.swing.JButton;
+
+import org.yagorundy.gui.constants.GuiConstants;
 
 public class Button extends JButton {
     /**
@@ -12,8 +12,8 @@ public class Button extends JButton {
 
     public Button(String name) {
         super(name);
-        Dimension size = new Dimension(150, 110);
-        setMaximumSize(size);
-        setPreferredSize(size);
+        setFont(GuiConstants.font);
+        setMaximumSize(GuiConstants.buttonSize);
+        setPreferredSize(GuiConstants.buttonSize);
     }
 }

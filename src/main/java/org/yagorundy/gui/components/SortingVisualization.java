@@ -10,6 +10,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
+import org.yagorundy.gui.constants.GuiConstants;
 import org.yagorundy.gui.reusable.Rod;
 import org.yagorundy.shared.Sortable;
 
@@ -18,8 +19,6 @@ public class SortingVisualization extends JPanel implements Sortable {
      *
      */
     private static final long serialVersionUID = 7693365261886603164L;
-
-    private static final int maxRodHeight = 1024;
 
     public final static Color defaultRodColor = Color.YELLOW;
     public final static Color comparativeRodColor = Color.PINK;
@@ -88,7 +87,7 @@ public class SortingVisualization extends JPanel implements Sortable {
     }
 
     private int getRodHeight(int value) {
-        return maxRodHeight / (maxValue - minValue + 1) * (value - minValue + 1);
+        return GuiConstants.maxRodHeight / (maxValue - minValue + 1) * (value - minValue + 1);
     }
 
     private void refresh() {
