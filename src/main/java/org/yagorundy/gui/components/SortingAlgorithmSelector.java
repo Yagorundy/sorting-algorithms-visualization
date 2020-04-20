@@ -1,10 +1,10 @@
 package org.yagorundy.gui.components;
 
-import java.awt.Color;
-
 import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+
+import org.yagorundy.gui.reusable.RadioButton;
 
 public class SortingAlgorithmSelector extends JPanel {
     /**
@@ -12,16 +12,14 @@ public class SortingAlgorithmSelector extends JPanel {
      */
     private static final long serialVersionUID = -456708946790248002L;
 
-    private JRadioButton[] buttons;
+    private RadioButton[] buttons;
     private ButtonGroup buttonGroup;
 
     public SortingAlgorithmSelector(String[] algorithms) {
-        setBackground(Color.RED);
-
-        buttons = new JRadioButton[algorithms.length];
+        buttons = new RadioButton[algorithms.length];
         buttonGroup = new ButtonGroup();
         for (int i = 0; i < algorithms.length; i++) {
-            JRadioButton button = new JRadioButton(algorithms[i]);
+            RadioButton button = new RadioButton(algorithms[i]);
             buttons[i] = button;
             buttonGroup.add(button);
             add(button);

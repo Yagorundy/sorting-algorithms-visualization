@@ -5,6 +5,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 
+import org.yagorundy.gui.constants.GuiConstants;
+
 public class Slider extends JPanel {
     /**
      *
@@ -22,7 +24,10 @@ public class Slider extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 
         label = new JLabel(labelText);
+        label.setFont(GuiConstants.font);
+
         slider = new JSlider(JSlider.HORIZONTAL, min, max, initial);
+        slider.setFont(GuiConstants.fontSmall);
 
         if (minorTickSpacing > 0) {
             slider.setMinorTickSpacing(1);

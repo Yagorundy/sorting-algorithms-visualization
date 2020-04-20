@@ -20,16 +20,6 @@ public class SortingVisualization extends JPanel implements Sortable {
      */
     private static final long serialVersionUID = 7693365261886603164L;
 
-    public final static Color defaultRodColor = Color.YELLOW;
-    public final static Color comparativeRodColor = Color.PINK;
-    public final static Color comparativeAltRodColor = Color.GRAY;
-    public final static Color superlativeRodColor = Color.RED;
-    public final static Color sortedRodColor = Color.CYAN;
-
-    private static final Dimension minRodFilter = new Dimension(15, 0);
-    private static final Dimension prefRodFilter = new Dimension(30, 0);
-    private static final Dimension maxRodSpace = new Dimension(42069, 0);
-
     private Rod<Integer>[] rods;
     private int minValue;
     private int maxValue;
@@ -37,7 +27,6 @@ public class SortingVisualization extends JPanel implements Sortable {
     public SortingVisualization(int length, boolean uniqueElements) {
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         setBorder(new EmptyBorder(100, 30, 100, 30));
-        setBackground(Color.GREEN);
 
         shuffle(length, uniqueElements);
     }
@@ -74,12 +63,12 @@ public class SortingVisualization extends JPanel implements Sortable {
 
         rods = (Rod<Integer>[]) new Rod[array.length];
         for (int i = 0; i < array.length; i++) {
-            Rod<Integer> rod = new Rod<Integer>(array[i], getRodHeight(array[i]), defaultRodColor);
+            Rod<Integer> rod = new Rod<Integer>(array[i], getRodHeight(array[i]), GuiConstants.defaultRodColor);
             rods[i] = rod;
             add(rod);
 
             if (i != array.length - 1)
-                add(new Box.Filler(minRodFilter, prefRodFilter, maxRodSpace));
+                add(new Box.Filler(GuiConstants.minRodFilter, GuiConstants.prefRodFilter, new Dimension(42069, 0)));
         }
 
         revalidate();
@@ -143,21 +132,21 @@ public class SortingVisualization extends JPanel implements Sortable {
 
     @Override
     public void markComparative(boolean isAlt, int ...indexes) {
-        mark(isAlt ? comparativeAltRodColor : comparativeRodColor, indexes);
+        mark(isAlt ? GuiConstants.comparativeAltRodColor : GuiConstants.comparativeRodColor, indexes);
     }
 
     @Override
     public void markSuperlative(int ...indexes) {
-        mark(superlativeRodColor, indexes);
+        mark(GuiConstants.superlativeRodColor, indexes);
     }
 
     @Override
     public void markSorted(int ...indexes) {
-        mark(sortedRodColor, indexes);
+        mark(GuiConstants.sortedRodColor, indexes);
     }
 
     @Override
     public void unmark(int ...indexes) {
-        mark(defaultRodColor, indexes);
+        mark(GuiConstants.defaultRodColor, indexes);
     }
 }

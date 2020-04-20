@@ -34,7 +34,7 @@ public class SortingOptions extends JPanel {
         setBorder(new EmptyBorder(50, 50, 50, 50));
 
         sortButton = new Button("Sort");
-        elementsSlider = new Slider(minElements, maxElements, initialElements, "Number of elements", 1, (maxElements - minElements) / 4);
+        elementsSlider = new Slider(minElements, maxElements, initialElements, "Elements", 1, (maxElements - minElements) / 4);
         delaySlider = new Slider(minSpeed, maxSpeed, initialSpeed, "Delay");
         uniqueCheckBox = new CheckBox("Unique", true);
         shuffleButton = new Button("Shuffle");
