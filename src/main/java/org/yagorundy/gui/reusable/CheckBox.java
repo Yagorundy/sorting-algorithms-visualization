@@ -13,7 +13,7 @@ public class CheckBox extends JCheckBox {
     public CheckBox(String text, boolean isChecked) {
         super(text, isChecked);
         setFont(GuiConstants.font);
-        setMaximumSize(GuiConstants.checkBoxSize);
-        setPreferredSize(GuiConstants.checkBoxSize);
+        // setMaximumSize(GuiConstants.checkBoxSize);
+        // setPreferredSize(GuiConstants.checkBoxSize);
     }
 }

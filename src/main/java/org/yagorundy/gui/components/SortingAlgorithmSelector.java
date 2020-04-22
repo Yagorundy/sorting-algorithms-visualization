@@ -4,6 +4,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 
+import org.yagorundy.gui.constants.GuiConstants;
 import org.yagorundy.gui.reusable.RadioButton;
 
 public class SortingAlgorithmSelector extends JPanel {
@@ -16,6 +17,8 @@ public class SortingAlgorithmSelector extends JPanel {
     private ButtonGroup buttonGroup;
 
     public SortingAlgorithmSelector(String[] algorithms) {
+        setBorder(GuiConstants.sortingAlgorithmSelectorBorder);
+
         buttons = new RadioButton[algorithms.length];
         buttonGroup = new ButtonGroup();
         for (int i = 0; i < algorithms.length; i++) {

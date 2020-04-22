@@ -5,6 +5,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
+import org.yagorundy.gui.constants.GuiConstants;
 import org.yagorundy.gui.reusable.Button;
 import org.yagorundy.gui.reusable.CheckBox;
 import org.yagorundy.gui.reusable.Slider;
@@ -31,7 +32,7 @@ public class SortingOptions extends JPanel {
 
     public SortingOptions() {
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        setBorder(new EmptyBorder(50, 50, 50, 50));
+        setBorder(GuiConstants.sortingOptionsBorder);
 
         sortButton = new Button("Sort");
         elementsSlider = new Slider(minElements, maxElements, initialElements, "Elements", 1, (maxElements - minElements) / 4);

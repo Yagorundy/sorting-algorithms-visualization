@@ -26,7 +26,7 @@ public class SortingVisualization extends JPanel implements Sortable {
 
     public SortingVisualization(int length, boolean uniqueElements) {
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        setBorder(new EmptyBorder(100, 30, 100, 30));
+        setBorder(GuiConstants.sortingVisualizationBorder);
 
         shuffle(length, uniqueElements);
     }

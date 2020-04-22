@@ -13,7 +13,7 @@ public class RadioButton extends JRadioButton {
     public RadioButton(String text) {
         super(text);
         setFont(GuiConstants.font);
-        setMaximumSize(GuiConstants.radioButtonSize);
-        setPreferredSize(GuiConstants.radioButtonSize);
+        // setMaximumSize(GuiConstants.radioButtonSize);
+        // setPreferredSize(GuiConstants.radioButtonSize);
     }
 }

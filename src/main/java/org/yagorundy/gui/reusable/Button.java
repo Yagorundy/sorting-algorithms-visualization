@@ -13,7 +13,7 @@ public class Button extends JButton {
     public Button(String name) {
         super(name);
         setFont(GuiConstants.font);
-        setMaximumSize(GuiConstants.buttonSize);
-        setPreferredSize(GuiConstants.buttonSize);
+        // setMaximumSize(GuiConstants.buttonSize);
+        // setPreferredSize(GuiConstants.buttonSize);
     }
 }
