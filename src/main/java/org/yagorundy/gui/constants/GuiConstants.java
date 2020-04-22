@@ -35,8 +35,8 @@ public class GuiConstants {
 
     public static final int maxRodHeight = dec(prefHeight, 0.7);
 
-    public static final int prefRodWidth = dec(prefWidth, 0.03);
-    public static final int maxRodWidth = dec(prefWidth, 0.05);
+    public static final int prefRodWidth = dec(prefWidth, 0.04);
+    public static final int maxRodWidth = dec(prefWidth, 0.06);
 
     public static final Dimension minRodFilter = new Dimension(dec(prefRodWidth, 0.2), 0);
     public static final Dimension prefRodFilter = new Dimension(dec(prefRodWidth, 0.6), 0);

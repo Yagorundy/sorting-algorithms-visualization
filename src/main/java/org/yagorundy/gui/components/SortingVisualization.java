@@ -8,7 +8,6 @@ import java.util.Random;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 
 import org.yagorundy.gui.constants.GuiConstants;
 import org.yagorundy.gui.reusable.Rod;

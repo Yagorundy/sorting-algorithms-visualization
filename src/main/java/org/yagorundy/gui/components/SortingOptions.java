@@ -3,7 +3,6 @@ package org.yagorundy.gui.components;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 
 import org.yagorundy.gui.constants.GuiConstants;
 import org.yagorundy.gui.reusable.Button;
@@ -17,7 +16,7 @@ public class SortingOptions extends JPanel {
     private static final long serialVersionUID = 8547027486739886564L;
 
     private static final int minElements = 8;
-    private static final int maxElements = 80;
+    private static final int maxElements = 64;
     private static final int initialElements = 16;
 
     private static final int minSpeed = 10;
