@@ -1,8 +1,10 @@
 package org.yagorundy.gui.components;
 
+import java.util.Arrays;
+import java.util.Optional;
+
 import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 
 import org.yagorundy.gui.constants.GuiConstants;
 import org.yagorundy.gui.reusable.RadioButton;
@@ -31,11 +33,7 @@ public class SortingAlgorithmSelector extends JPanel {
     }
 
     public String getSelectedButton() {
-        for (JRadioButton button : buttons) {
-            if (button.isSelected()) {
-                return button.getText();
-            }
-        }
-        return "";
+        Optional<RadioButton> button = Arrays.stream(buttons).filter(b -> b.isSelected()).findFirst();
+        return button.isPresent() ? button.get().getText() : "";
     }
 }
