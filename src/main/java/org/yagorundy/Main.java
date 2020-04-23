@@ -4,6 +4,10 @@ import org.yagorundy.app.App;
 
 class Main {
     public static void main(String[] args) {
-        new App();
+        try {
+            new App();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
