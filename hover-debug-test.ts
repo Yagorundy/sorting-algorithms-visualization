@@ -133,7 +133,69 @@ export function checkHoverState(componentId: string) {
   });
 }
 
+// Debug card component hover specifically
+export function debugCardHover() {
+  console.log('🃏 Debugging card component hover...');
+  
+  const cardComponents = document.querySelectorAll('[comptype="card"]');
+  console.log(`Found ${cardComponents.length} card components`);
+  
+  cardComponents.forEach((card, index) => {
+    const childComponents = card.querySelectorAll('[comptype]');
+    console.log(`Card ${index + 1} (${card.id}):`, {
+      card: card,
+      children: Array.from(childComponents).map(child => ({
+        id: child.id,
+        type: child.getAttribute('comptype'),
+        element: child
+      }))
+    });
+    
+    // Add temporary visual indicators
+    (card as HTMLElement).style.border = '2px solid blue';
+    childComponents.forEach(child => {
+      (child as HTMLElement).style.border = '1px solid red';
+    });
+  });
+  
+  console.log('💡 Blue border = card, Red border = children');
+  console.log('💡 Check console output above for component hierarchy');
+}
+
+// Test hover event propagation
+export function testHoverPropagation(componentId: string) {
+  const component = document.getElementById(componentId);
+  if (!component) {
+    console.error('Component not found:', componentId);
+    return;
+  }
+  
+  console.log('🧪 Testing hover propagation for:', componentId);
+  
+  // Add event listeners to trace propagation
+  component.addEventListener('mouseenter', (e) => {
+    console.log('📥 mouseenter on:', componentId, e.target);
+  }, true); // Capture phase
+  
+  component.addEventListener('mouseenter', (e) => {
+    console.log('📤 mouseenter bubbling:', componentId, e.target);
+  }, false); // Bubble phase
+  
+  // Check current hover state
+  const isHovered = Array.from(document.querySelectorAll(':hover')).includes(component);
+  console.log('Current hover state:', isHovered);
+}
+
 if (typeof window !== 'undefined') {
   (window as any).showAllHoverOverlays = showAllHoverOverlays;
   (window as any).checkHoverState = checkHoverState;
+  (window as any).debugCardHover = debugCardHover;
+  (window as any).testHoverPropagation = testHoverPropagation;
+  
+  console.log('💡 Available debug functions:');
+  console.log('  - debugHoverSystem() - General hover system debug');
+  console.log('  - debugCardHover() - Specific card component debug');
+  console.log('  - testHoverPropagation(componentId) - Test event propagation');
+  console.log('  - showAllHoverOverlays() - Visual overlay test');
+  console.log('  - checkHoverState(componentId) - Check specific component state');
 }

@@ -181,6 +181,7 @@ If hover isn't working on inner components:
    ```javascript
    debugHoverSystem(); // Check if components are found
    showAllHoverOverlays(); // Visually highlight all hover areas
+   debugCardHover(); // Specific debug for card components
    ```
 
 2. **Check Setup**: Verify your component is calling:
