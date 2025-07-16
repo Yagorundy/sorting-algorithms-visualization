@@ -414,9 +414,12 @@ export class HoverSystem implements OnDestroy {
 
   // ENHANCEMENT: Optimized floating label toggle with CSS classes
   private toggleFloatingLabel(componentElement: HTMLElement, isHovered: boolean, isSecondaryHover?: boolean) {
-    // Only show floating labels for the directly hovered component (not parents with secondary hover)
-    // and only when the component is not selected
-    const shouldShow = isHovered && !isSecondaryHover && !componentElement.classList.contains('selected');
+    const isSelected = componentElement.classList.contains('selected');
+    
+    // Show floating labels if:
+    // 1. Component is selected (always show for selected components)
+    // 2. Component is directly hovered (not secondary hover from parent)
+    const shouldShow = isSelected || (isHovered && !isSecondaryHover);
     
     // Direct ID lookup for maximum performance
     const componentId = componentElement.id;

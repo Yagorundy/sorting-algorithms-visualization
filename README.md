@@ -82,7 +82,8 @@ Replace expensive CSS selectors with direct DOM manipulation:
 
 ```css
 /* Old (causes reflow) */
-[comptype]:has(> .hover-overlay.hovered:not(.hovered-secondary)):not(.selected)>component-label div.floating-label {
+[comptype]:has(> .hover-overlay.hovered:not(.hovered-secondary))>component-label div.floating-label,
+[comptype].selected>component-label div.floating-label {
   visibility: visible;
 }
 ```
