@@ -467,6 +467,11 @@ export class HoverSystem implements OnDestroy {
     this.setHoverState(componentId, isHovered, event);
   }
 
+  // Alias for setHoverState - commonly used for manual hover control
+  public setComponentHoverState(componentId: string, isHovered: boolean, event?: MouseEvent) {
+    this.setHoverState(componentId, isHovered, event);
+  }
+
   // Check if component has hover functionality
   public hasHoverFunctionality(componentId: string): boolean {
     return this.hoverSubjects.has(componentId);

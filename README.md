@@ -31,12 +31,16 @@ ngOnDestroy() {
 
 ```typescript
 // Simple manual triggering
+this.hoverSystem.setComponentHoverState(componentId, true, mouseEvent);
+this.hoverSystem.setComponentHoverState(componentId, false);
+
+// Alternative method (same functionality)
 this.hoverSystem.triggerHover(componentId, true, mouseEvent);
 this.hoverSystem.triggerHover(componentId, false);
 
 // Check if component has hover functionality
 if (this.hoverSystem.hasHoverFunctionality(componentId)) {
-  this.hoverSystem.triggerHover(componentId, true);
+  this.hoverSystem.setComponentHoverState(componentId, true);
 }
 ```
 
@@ -113,23 +117,27 @@ if (shouldShow) {
 Perfect for breadcrumbs, external controls, or custom interactions:
 
 ```typescript
-// Simple manual triggering
+// Simple manual triggering (preferred method)
+this.hoverSystem.setComponentHoverState(componentId, true, mouseEvent);
+this.hoverSystem.setComponentHoverState(componentId, false);
+
+// Alternative method (same functionality)
 this.hoverSystem.triggerHover(componentId, true, mouseEvent);
 this.hoverSystem.triggerHover(componentId, false);
 
 // Breadcrumb example
 breadcrumbElement.addEventListener('mouseenter', (event) => {
-  this.hoverSystem.triggerHover(componentId, true, event);
+  this.hoverSystem.setComponentHoverState(componentId, true, event);
 });
 
 // Bulk operations
 this.breadcrumbItems.forEach(item => {
-  this.hoverSystem.triggerHover(item.id, isHovered);
+  this.hoverSystem.setComponentHoverState(item.id, isHovered);
 });
 
 // Safety checks
 if (this.hoverSystem.hasHoverFunctionality(componentId)) {
-  this.hoverSystem.triggerHover(componentId, true);
+  this.hoverSystem.setComponentHoverState(componentId, true);
 }
 ```
 

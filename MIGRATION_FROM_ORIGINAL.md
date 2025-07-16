@@ -123,10 +123,10 @@ breadcrumbElement.addEventListener('mouseleave', () => {
 ```typescript
 // Breadcrumb hover with new system
 breadcrumbElement.addEventListener('mouseenter', (mouseEvent) => {
-  this.hoverSystem.triggerHover(componentId, true, mouseEvent);
+  this.hoverSystem.setComponentHoverState(componentId, true, mouseEvent);
 });
 breadcrumbElement.addEventListener('mouseleave', () => {
-  this.hoverSystem.triggerHover(componentId, false);
+  this.hoverSystem.setComponentHoverState(componentId, false);
 });
 ```
 
