@@ -66,6 +66,14 @@ ngOnInit() {
   );
 }
 
+// Manual hover triggering (old way)
+breadcrumbElement.addEventListener('mouseenter', (mouseEvent) => {
+  this.hoverHelper?.onHover(componentElem as HTMLElement, true, componentId, mouseEvent);
+});
+breadcrumbElement.addEventListener('mouseleave', () => {
+  this.hoverHelper?.onUnHover(componentElem as HTMLElement, true);
+});
+
 ngOnDestroy() {
   this.hoverHelper.destroy(this.componentId);
 }
@@ -95,11 +103,65 @@ ngOnInit() {
   );
 }
 
+// Manual hover triggering (new way)
+breadcrumbElement.addEventListener('mouseenter', (mouseEvent) => {
+  this.hoverManager.setComponentHoverState(componentId, true, mouseEvent);
+});
+breadcrumbElement.addEventListener('mouseleave', () => {
+  this.hoverManager.setComponentHoverState(componentId, false);
+});
+
 ngOnDestroy() {
   // Clean up subscription
   this.hoverSubscription?.unsubscribe();
   this.hoverManager.destroyComponentHover(this.componentId);
 }
+```
+
+## Manual Hover Triggering
+
+### Simple Manual Triggering
+```typescript
+// Trigger hover on
+this.hoverManager.setComponentHoverState(componentId, true, mouseEvent);
+
+// Trigger hover off
+this.hoverManager.setComponentHoverState(componentId, false);
+```
+
+### Advanced Manual Control
+```typescript
+// Check if component has hover functionality before triggering
+if (this.hoverManager.hasHoverFunctionality(componentId)) {
+  this.hoverManager.setComponentHoverState(componentId, true, event);
+} else {
+  console.warn('Component not initialized for hover');
+}
+
+// Bulk operations
+this.breadcrumbItems.forEach(item => {
+  this.hoverManager.setComponentHoverState(item.id, isHovered);
+});
+
+// Clear all hover states
+this.hoverManager.clearAllHoverStates();
+```
+
+### Direct UI Control (Advanced)
+```typescript
+// For granular control, inject HoverUIManager
+constructor(
+  private hoverManager: HoverManager,
+  private hoverUIManager: HoverUIManager // Optional for advanced cases
+) {}
+
+// Direct UI manipulation
+this.hoverUIManager.addPreviewComponentHover(element, page, {
+  addOutline: true,
+  addSecondaryHover: false
+});
+
+this.hoverUIManager.removeComponentHover(element, page, true);
 ```
 
 ## Key Benefits

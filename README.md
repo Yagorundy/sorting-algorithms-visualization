@@ -72,6 +72,7 @@ HoverManager (Facade)
 - `index.ts` - Exports
 - `HOVER_REFACTOR_GUIDE.md` - Migration guide
 - `PERFORMANCE_GUIDE.md` - Performance optimization guide
+- `MANUAL_HOVER_GUIDE.md` - Manual hover triggering guide
 
 ## Performance Benefits
 
@@ -87,6 +88,31 @@ Replace expensive CSS selectors with direct DOM manipulation:
 ```typescript
 // New (no reflow, ~10x faster)
 // Automatic via HoverUIManager.toggleFloatingLabels()
+```
+
+## Manual Hover Triggering
+
+Perfect for breadcrumbs, external controls, or custom interactions:
+
+```typescript
+// Simple manual triggering
+this.hoverManager.setComponentHoverState(componentId, true, mouseEvent);
+this.hoverManager.setComponentHoverState(componentId, false);
+
+// Breadcrumb example
+breadcrumbElement.addEventListener('mouseenter', (event) => {
+  this.hoverManager.setComponentHoverState(componentId, true, event);
+});
+
+// Bulk operations
+this.breadcrumbItems.forEach(item => {
+  this.hoverManager.setComponentHoverState(item.id, isHovered);
+});
+
+// Safety checks
+if (this.hoverManager.hasHoverFunctionality(componentId)) {
+  this.hoverManager.setComponentHoverState(componentId, true);
+}
 ```
 
 ## Adding Custom Related Elements
