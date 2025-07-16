@@ -250,6 +250,9 @@ export class HoverSystem implements OnDestroy {
     if (targetCompType && isSecondaryHoveredComponentType) {
       setTimeout(() => {
         this.getHoverOverlayEl(element.id)?.classList.remove('hovered-secondary');
+        
+        // Show floating label again for component that transitions back to primary hover
+        this.toggleFloatingLabel(element, true, false);
       }, 0);
     }
 
@@ -258,6 +261,9 @@ export class HoverSystem implements OnDestroy {
         const hoverOverlayEl = this.getHoverOverlayEl(element.id);
         hoverOverlayEl?.classList.remove('outlined');
         hoverOverlayEl?.classList.add('hovered-secondary');
+        
+        // Hide floating label for components that get secondary hover (parents)
+        this.toggleFloatingLabel(element, false);
       }, 0);
     });
 
@@ -434,7 +440,8 @@ export class HoverSystem implements OnDestroy {
 
   // ENHANCEMENT: Optimized floating label toggle with CSS classes
   private toggleFloatingLabel(componentElement: HTMLElement, isHovered: boolean, isSecondaryHover?: boolean) {
-    // Only show floating labels for primary hover (not secondary) and when not selected
+    // Only show floating labels for the directly hovered component (not parents with secondary hover)
+    // and only when the component is not selected
     const shouldShow = isHovered && !isSecondaryHover && !componentElement.classList.contains('selected');
     
     // Direct ID lookup for maximum performance
