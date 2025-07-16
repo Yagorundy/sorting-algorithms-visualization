@@ -161,7 +161,7 @@ export class HoverUIManager {
   }
 
   /**
-   * Toggle floating label visibility
+   * Toggle floating label visibility by ID
    * Replaces: [comptype]:has(> .hover-overlay.hovered:not(.hovered-secondary)):not(.selected)>component-label div.floating-label
    */
   public toggleFloatingLabels(
@@ -172,12 +172,14 @@ export class HoverUIManager {
     // Only show floating labels for primary hover (not secondary) and when not selected
     const shouldShow = isHovered && !isSecondaryHover && !componentElement.classList.contains('selected');
     
-    const floatingLabels = componentElement.querySelectorAll<HTMLElement>('component-label div.floating-label');
+    // Target the specific floating label by component ID
+    const componentId = componentElement.id;
+    const floatingLabel = document.getElementById(`component-label_${componentId}`);
     
-    floatingLabels.forEach(label => {
-      label.style.visibility = shouldShow ? 'visible' : 'hidden';
-      label.style.opacity = shouldShow ? '1' : '0';
-    });
+    if (floatingLabel) {
+      floatingLabel.style.visibility = shouldShow ? 'visible' : 'hidden';
+      floatingLabel.style.opacity = shouldShow ? '1' : '0';
+    }
   }
 
   /**
