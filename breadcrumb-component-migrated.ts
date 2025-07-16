@@ -129,7 +129,10 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
       })
     );
 
-    // REMOVED: No longer need to create HoverHelper instance
+    // NEW: With breadcrumb component, hover is only for manual triggering, 
+    // so we don't need automatic event listeners - just state management
+    // If you wanted automatic hover on breadcrumb elements themselves, you would use:
+    // this.hoverSubscription = this.hoverManager.setupComponentHover(...);
   }
 
   ngOnChanges(changes: SimpleChanges): void {

@@ -206,6 +206,43 @@ batchHoverUpdates(updates: Array<{id: string, hovered: boolean}>) {
 }
 ```
 
+## When to Use Each Method
+
+### `setupComponentHover()` - Complete Setup
+Use when you want both hover state management AND automatic mouse event handling:
+```typescript
+// For normal components that should respond to hover automatically
+this.hoverSubscription = this.hoverManager.setupComponentHover(
+  this.elementRef.nativeElement,
+  this.isPreviewHover,
+  this.componentType,
+  this.componentId,
+  this.previewMode
+);
+```
+
+### Manual Triggering Only
+Use when you only need manual control (like breadcrumbs):
+```typescript
+// No setup needed - just trigger manually when needed
+this.hoverManager.setComponentHoverState(componentId, true, event);
+```
+
+### `initializeComponentHover()` - State Only
+Use when you need hover state management but want to handle events manually:
+```typescript
+// Initialize state subscription without automatic event listeners
+this.hoverSubscription = this.hoverManager.initializeComponentHover(
+  this.elementRef.nativeElement,
+  this.isPreviewHover,
+  this.componentType,
+  this.componentId
+);
+
+// Then handle events manually
+this.customEventHandling();
+```
+
 ## Integration Examples
 
 ### With Angular Template

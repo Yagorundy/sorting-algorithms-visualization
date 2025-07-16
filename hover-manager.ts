@@ -21,7 +21,40 @@ export class HoverManager implements OnDestroy {
   ) {}
 
   /**
-   * Initialize hover functionality for a component
+   * Complete hover setup for a component - combines initialization and event listeners
+   * This is the recommended method for most use cases.
+   * @param fragment - The DOM element to attach hover listeners to
+   * @param isPreviewHover - Whether this is a preview component (true) or editor component (false)
+   * @param componentType - The type of the component
+   * @param componentId - Unique identifier for the component
+   * @param previewMode - Current preview mode
+   * @param containerType - Optional container type for special handling
+   * @returns Subscription that should be stored and unsubscribed when component is destroyed
+   */
+  public setupComponentHover(
+    fragment: HTMLElement,
+    isPreviewHover: boolean,
+    componentType: PageComponentNames,
+    componentId: string,
+    previewMode: PreviewModes,
+    containerType?: PageGridComponentNames
+  ): Subscription {
+    // Set up event listeners
+    this.eventHandler.setupComponentHoverListeners(fragment, previewMode, componentId, isPreviewHover);
+    
+    // Initialize hover state subscription
+    return this.eventHandler.subscribeToHoverState(
+      componentId,
+      fragment,
+      componentType,
+      isPreviewHover,
+      containerType
+    );
+  }
+
+  /**
+   * Initialize hover functionality for a component (without event listeners)
+   * Use this for manual triggering scenarios or when you need to control events separately.
    * @param fragment - The DOM element to attach hover listeners to
    * @param isPreviewHover - Whether this is a preview component (true) or editor component (false)
    * @param componentType - The type of the component
@@ -46,7 +79,8 @@ export class HoverManager implements OnDestroy {
   }
 
   /**
-   * Set up DOM event listeners for a component
+   * Set up DOM event listeners for a component (without hover state initialization)
+   * Use this when you only need event listeners or have already initialized hover state.
    * @param fragment - The DOM element to attach listeners to
    * @param previewMode - Current preview mode
    * @param componentId - Unique identifier for the component

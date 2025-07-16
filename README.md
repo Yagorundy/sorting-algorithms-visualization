@@ -10,7 +10,27 @@ import { HoverManager } from './path/to/hover-system';
 constructor(private hoverManager: HoverManager) {}
 
 ngOnInit() {
-  // Initialize hover functionality
+  // Complete hover setup in one call
+  this.hoverSubscription = this.hoverManager.setupComponentHover(
+    this.elementRef.nativeElement,
+    this.isPreviewHover,
+    this.componentType,
+    this.componentId,
+    this.previewMode
+  );
+}
+
+ngOnDestroy() {
+  this.hoverSubscription?.unsubscribe();
+  this.hoverManager.destroyComponentHover(this.componentId);
+}
+```
+
+### Alternative: Separate Calls (for special cases)
+
+```typescript
+ngOnInit() {
+  // If you need separate control over initialization and event listeners
   this.hoverSubscription = this.hoverManager.initializeComponentHover(
     this.elementRef.nativeElement,
     this.isPreviewHover,
@@ -18,18 +38,12 @@ ngOnInit() {
     this.componentId
   );
   
-  // Setup event listeners
   this.hoverManager.setupEventListeners(
     this.elementRef.nativeElement,
     this.previewMode,
     this.componentId,
     this.isPreviewHover
   );
-}
-
-ngOnDestroy() {
-  this.hoverSubscription?.unsubscribe();
-  this.hoverManager.destroyComponentHover(this.componentId);
 }
 ```
 
@@ -61,6 +75,7 @@ HoverManager (Facade)
 ✅ **Detail Dialog**: Context-aware hover behavior  
 ✅ **Performance Optimized**: Direct DOM manipulation replaces expensive CSS `:has()` selectors  
 ✅ **Related Element Control**: Automatic toggling of floating labels, buttons, handles  
+✅ **Simple API**: Single method for complete hover setup, separate methods for advanced control  
 
 ## Files
 
@@ -73,6 +88,7 @@ HoverManager (Facade)
 - `HOVER_REFACTOR_GUIDE.md` - Migration guide
 - `PERFORMANCE_GUIDE.md` - Performance optimization guide
 - `MANUAL_HOVER_GUIDE.md` - Manual hover triggering guide
+- `USAGE_PATTERNS.md` - Quick reference for different usage patterns
 
 ## Performance Benefits
 
@@ -134,6 +150,10 @@ public toggleRelatedElements(componentElement: HTMLElement, isHovered: boolean, 
   this.toggleMyCustomElements(componentElement, isHovered, isSecondaryHover); // Add this
 }
 ```
+
+## Usage Patterns
+
+See `USAGE_PATTERNS.md` for complete examples of different usage scenarios.
 
 ## Migration
 

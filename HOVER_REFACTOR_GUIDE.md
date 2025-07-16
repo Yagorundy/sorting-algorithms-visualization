@@ -81,25 +81,18 @@ ngOnDestroy() {
 
 ### New Usage (HoverManager)
 ```typescript
-// New way
+// New way - simplified with combined method
 constructor(private hoverManager: HoverManager) {}
 
 ngOnInit() {
-  // Initialize hover functionality and store subscription
-  this.hoverSubscription = this.hoverManager.initializeComponentHover(
+  // Complete setup in one call
+  this.hoverSubscription = this.hoverManager.setupComponentHover(
     this.elementRef.nativeElement,
     this.isPreviewHover,
     this.componentType,
     this.componentId,
-    this.containerType
-  );
-  
-  // Setup event listeners
-  this.hoverManager.setupEventListeners(
-    this.elementRef.nativeElement,
     this.previewMode,
-    this.componentId,
-    this.isPreviewHover
+    this.containerType
   );
 }
 
@@ -115,6 +108,30 @@ ngOnDestroy() {
   // Clean up subscription
   this.hoverSubscription?.unsubscribe();
   this.hoverManager.destroyComponentHover(this.componentId);
+}
+```
+
+### Alternative: Separate Calls (for edge cases)
+```typescript
+ngOnInit() {
+  // If you need separate control (e.g., manual triggering only)
+  this.hoverSubscription = this.hoverManager.initializeComponentHover(
+    this.elementRef.nativeElement,
+    this.isPreviewHover,
+    this.componentType,
+    this.componentId,
+    this.containerType
+  );
+  
+  // Only add event listeners if needed
+  if (this.needsEventListeners) {
+    this.hoverManager.setupEventListeners(
+      this.elementRef.nativeElement,
+      this.previewMode,
+      this.componentId,
+      this.isPreviewHover
+    );
+  }
 }
 ```
 
@@ -196,7 +213,17 @@ this.hoverUIManager.removeComponentHover(element, page, true);
 ### HoverManager Methods
 
 ```typescript
-// Initialize hover for a component
+// Complete hover setup (RECOMMENDED - combines initialization + event listeners)
+setupComponentHover(
+  fragment: HTMLElement,
+  isPreviewHover: boolean,
+  componentType: PageComponentNames,
+  componentId: string,
+  previewMode: PreviewModes,
+  containerType?: PageGridComponentNames
+): Subscription
+
+// Initialize hover for a component (without event listeners)
 initializeComponentHover(
   fragment: HTMLElement,
   isPreviewHover: boolean,
@@ -205,7 +232,7 @@ initializeComponentHover(
   containerType?: PageGridComponentNames
 ): Subscription
 
-// Setup DOM event listeners
+// Setup DOM event listeners (without initialization)
 setupEventListeners(
   fragment: HTMLElement,
   previewMode: PreviewModes,
