@@ -1,35 +1,32 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { PageComponentNames } from "@common/data/page/PageComponentNames";
 import { PageGridComponentNames } from "@common/data/page/PageGridComponentNames";
 import { PreviewModes } from "@common/data/report/enums/PreviewModes";
 import { Subscription } from 'rxjs';
 import { HoverStateManager } from './hover-state-manager';
 import { HoverEventHandler } from './hover-event-handler';
+import { HoverUIManager } from './hover-ui-manager';
+import { HoverCoordinator } from './hover-coordinator';
 
-/**
- * Main facade for the hover system. Provides a simple API for components to initialize
- * hover behavior and manage their hover subscriptions.
- */
 @Injectable({
   providedIn: 'root'
 })
-export class HoverManager implements OnDestroy {
-  
+export class HoverManager {
+
   constructor(
-    private stateManager: HoverStateManager,
-    private eventHandler: HoverEventHandler
+    private hoverStateManager: HoverStateManager,
+    private hoverEventHandler: HoverEventHandler,
+    private hoverUIManager: HoverUIManager,
+    private hoverCoordinator: HoverCoordinator,
   ) {}
 
+  // ================================
+  // MAIN API - Complete hover setup in one call
+  // ================================
+
   /**
-   * Complete hover setup for a component - combines initialization and event listeners
-   * This is the recommended method for most use cases.
-   * @param fragment - The DOM element to attach hover listeners to
-   * @param isPreviewHover - Whether this is a preview component (true) or editor component (false)
-   * @param componentType - The type of the component
-   * @param componentId - Unique identifier for the component
-   * @param previewMode - Current preview mode
-   * @param containerType - Optional container type for special handling
-   * @returns Subscription that should be stored and unsubscribed when component is destroyed
+   * Complete hover setup - faithful recreation of original HoverHelper + HoverService
+   * Combines both initHoverHelper + listenForHoverRelatedEvents functionality
    */
   public setupComponentHover(
     fragment: HTMLElement,
@@ -39,96 +36,83 @@ export class HoverManager implements OnDestroy {
     previewMode: PreviewModes,
     containerType?: PageGridComponentNames
   ): Subscription {
-    // Set up event listeners
-    this.eventHandler.setupComponentHoverListeners(fragment, previewMode, componentId, isPreviewHover);
-    
-    // Initialize hover state subscription
-    return this.eventHandler.subscribeToHoverState(
-      componentId,
-      fragment,
-      componentType,
-      isPreviewHover,
-      containerType
-    );
+    // Original initHoverHelper logic
+    const addSecondaryHover = PageComponentNames.detail == componentType && 
+                             !(componentType == PageComponentNames.detail && containerType == PageGridComponentNames.detail);
+
+    // Set up event listeners (original listenForHoverRelatedEvents logic)
+    if (previewMode == PreviewModes.editor && this.hoverStateManager.getHoverObservable(componentId)) {
+      this.hoverEventHandler.setupMouseEvents(fragment, componentId, isPreviewHover);
+    }
+
+    // Set up hover state subscription (original initHoverHelper logic)
+    return this.hoverStateManager.getHoverObservable(componentId).subscribe(result => {
+      if (result.isHovered) {
+        this.onHover(fragment, isPreviewHover, componentId, result.event, addSecondaryHover);
+      } else {
+        this.onUnHover(fragment, isPreviewHover);
+      }
+    });
+  }
+
+  // ================================
+  // HOVER STATE CONTROL
+  // ================================
+
+  /**
+   * Manual hover triggering for breadcrumbs, external controls, etc.
+   */
+  public setComponentHoverState(componentId: string, isHovered: boolean, event?: MouseEvent) {
+    this.hoverStateManager.setHoverState(componentId, isHovered, event);
   }
 
   /**
-   * Initialize hover functionality for a component (without event listeners)
-   * Use this for manual triggering scenarios or when you need to control events separately.
-   * @param fragment - The DOM element to attach hover listeners to
-   * @param isPreviewHover - Whether this is a preview component (true) or editor component (false)
-   * @param componentType - The type of the component
-   * @param componentId - Unique identifier for the component
-   * @param containerType - Optional container type for special handling
-   * @returns Subscription that should be stored and unsubscribed when component is destroyed
+   * Alternative method name for manual hover triggering
    */
-  public initializeComponentHover(
-    fragment: HTMLElement,
-    isPreviewHover: boolean,
-    componentType: PageComponentNames,
-    componentId: string,
-    containerType?: PageGridComponentNames
-  ): Subscription {
-    return this.eventHandler.subscribeToHoverState(
-      componentId,
-      fragment,
-      componentType,
-      isPreviewHover,
-      containerType
-    );
+  public triggerHover(componentId: string, isHovered: boolean, event?: MouseEvent) {
+    this.hoverStateManager.setHoverState(componentId, isHovered, event);
   }
 
   /**
-   * Set up DOM event listeners for a component (without hover state initialization)
-   * Use this when you only need event listeners or have already initialized hover state.
-   * @param fragment - The DOM element to attach listeners to
-   * @param previewMode - Current preview mode
-   * @param componentId - Unique identifier for the component
-   * @param isPreviewHover - Whether this is a preview component
+   * Check if component has hover functionality
    */
-  public setupEventListeners(
-    fragment: HTMLElement,
-    previewMode: PreviewModes,
-    componentId: string,
-    isPreviewHover: boolean
-  ): void {
-    this.eventHandler.setupComponentHoverListeners(fragment, previewMode, componentId, isPreviewHover);
-  }
-
-  /**
-   * Manually trigger hover state for a component
-   * @param componentId - Component to hover
-   * @param isHovered - Whether to set hovered or unhovered state
-   * @param event - Optional mouse event
-   */
-  public setComponentHoverState(componentId: string, isHovered: boolean, event?: MouseEvent): void {
-    this.stateManager.setHoverState(componentId, isHovered, event);
+  public hasHoverFunctionality(componentId: string): boolean {
+    return this.hoverStateManager.hasHoverFunctionality(componentId);
   }
 
   /**
    * Clean up hover functionality for a component
-   * @param componentId - Component to clean up
    */
-  public destroyComponentHover(componentId: string): void {
-    this.stateManager.removeHoverObservable(componentId);
+  public destroyComponentHover(componentId: string) {
+    this.hoverStateManager.destroy(componentId);
   }
 
-  /**
-   * Check if a component has hover functionality initialized
-   * @param componentId - Component to check
-   */
-  public hasHoverFunctionality(componentId: string): boolean {
-    return this.stateManager.hasHoverObservable(componentId);
+  // ================================
+  // INTERNAL HOVER LOGIC (from original onHover/onUnHover)
+  // ================================
+
+  private onHover(fragment: HTMLElement, isPreviewHover: boolean, componentId: string, event?: MouseEvent, addSecondaryHover?: boolean) {
+    const shiftDown = event?.shiftKey;
+
+    const element = fragment as HTMLElement;
+    if (isPreviewHover) {
+      if (shiftDown && !document.querySelector('#editorButtonContainer:hover')) {
+        this.hoverUIManager.hoverDirectParent(element, isPreviewHover);
+      } else {
+        this.hoverUIManager.hoverPreviewComponent(element, true, addSecondaryHover && !!event);
+      }
+    } else {
+      this.hoverUIManager.hoverEditorComponent(element);
+    }
+
+    if (event) {
+      this.hoverEventHandler.handleNonTargetElements(event, componentId);
+    }
+    this.hoverUIManager.changeIndexOfHoverButton('1022', fragment, isPreviewHover);
   }
 
-  /**
-   * Clear all hover states across the application
-   */
-  public clearAllHoverStates(): void {
-    this.stateManager.clearAllHoverStates();
-  }
-
-  ngOnDestroy(): void {
-    // Cleanup is handled by individual services
+  private onUnHover(fragment: HTMLElement, isPreviewHover: boolean) {
+    this.hoverUIManager.removeHoverRelatedAttributesFromElement(fragment as HTMLElement, true);
+    this.hoverUIManager.changeIndexOfHoverButton('0', fragment, isPreviewHover);
   }
 }

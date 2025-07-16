@@ -1,14 +1,11 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Page } from '@common/data/page/Page';
 import { PageComponentNames } from "@common/data/page/PageComponentNames";
-import { PageGridComponentNames } from "@common/data/page/PageGridComponentNames";
-import { PreviewModes } from "@common/data/report/enums/PreviewModes";
 import { Store } from '@ngrx/store';
 import { Subscription } from 'rxjs';
 import { AppState } from 'src/app/app.state';
-import { HoverStateManager, HoverState } from './hover-state-manager';
+import { HoverStateManager } from './hover-state-manager';
 import { HoverUIManager } from './hover-ui-manager';
-import { HoverCoordinator } from './hover-coordinator';
 
 @Injectable({
   providedIn: 'root'
@@ -19,237 +16,233 @@ export class HoverEventHandler implements OnDestroy {
   private keyDownListenerMethod = this.onKeyDown.bind(this);
   private keyUpListenerMethod = this.onKeyUp.bind(this);
 
-  private readonly SECONDARY_HOVER_COMPONENT_TYPES = [
-    PageComponentNames.section,
-    PageComponentNames.button,
-    PageComponentNames.row,
-    PageComponentNames.detail,
-    PageComponentNames.column,
-    PageComponentNames.card
-  ];
-
   constructor(
     private store: Store<AppState>,
-    private stateManager: HoverStateManager,
-    private uiManager: HoverUIManager,
-    private coordinator: HoverCoordinator
+    private hoverStateManager: HoverStateManager,
+    private hoverUIManager: HoverUIManager,
   ) {
-    this.initializePageSubscription();
-    this.initializeKeyboardListeners();
+    this.subscriptions.push(
+      this.store.select(state => state.report.pagePreview.loadedPage).subscribe((loadedPage?: Page) => {
+        if (loadedPage) this.page = loadedPage;
+      }),
+    );
+
+    document.addEventListener("keydown", this.keyDownListenerMethod);
+    document.addEventListener("keyup", this.keyUpListenerMethod);
   }
 
-  public setupComponentHoverListeners(
+  // ================================
+  // EVENT HANDLING METHODS
+  // ================================
+
+  public setupMouseEvents(
     fragment: HTMLElement,
-    previewMode: PreviewModes,
     componentId: string,
     isPreviewHover: boolean
   ): void {
-    if (previewMode !== PreviewModes.editor || !this.stateManager.hasHoverObservable(componentId)) {
-      return;
-    }
-
     fragment.addEventListener('mouseenter', (event) => {
-      this.handleMouseEnter(event, componentId);
+      this.onHoverEvent(event, componentId);
     });
-
     fragment.addEventListener('mouseleave', (event) => {
-      this.handleMouseLeave(event, componentId, isPreviewHover);
+      this.onUnHoverEvent(event, componentId, isPreviewHover);
     });
   }
 
-  public subscribeToHoverState(
-    componentId: string,
-    fragment: HTMLElement,
-    componentType: PageComponentNames,
-    isPreviewHover: boolean,
-    containerType?: PageGridComponentNames
-  ): Subscription {
-    return this.stateManager.getHoverObservable(componentId).subscribe((hoverState: HoverState) => {
-      if (hoverState.isHovered) {
-        this.handleComponentHover(fragment, componentType, isPreviewHover, hoverState, containerType);
-      } else {
-        this.handleComponentUnhover(fragment, isPreviewHover);
-      }
-    });
-  }
-
-  private handleMouseEnter(event: MouseEvent, componentId: string): void {
+  // Original onHoverEvent logic
+  private onHoverEvent(event: MouseEvent, componentId: string) {
     this.preventEventPropagation(event);
-    this.stateManager.setHoverState(componentId, true, event);
+    this.hoverStateManager.setHoverState(componentId, true, event);
   }
 
-  private handleMouseLeave(event: MouseEvent, componentId: string, isPreviewHover: boolean): void {
+  // Original onUnHoverEvent logic - EXACTLY as in original
+  private onUnHoverEvent(event: MouseEvent, componentId: string, isPreviewHover: boolean) {
     this.preventEventPropagation(event);
-    this.stateManager.setHoverState(componentId, false, event);
+    this.hoverStateManager.setHoverState(componentId, false, event);
 
-    // Handle hover transition from inner to outer components (matching original logic)
-    setTimeout(() => {
-      const directlyHoveredComponent = this.coordinator.findDirectlyHoveredComponent();
-      
-      // Remove all hover-related attributes from any hovered preview components
-      document.querySelectorAll<HTMLElement>('.hover-overlay.hovered')
-        .forEach((overlay) => {
-          const parentComponent = overlay.parentElement;
-          if (parentComponent && parentComponent.hasAttribute('comptype')) {
-            this.uiManager.removeComponentHover(parentComponent, this.page!, true);
-          }
-        });
+    // When hovering from inner (children) to outer parts (parents), e.g. from Media to Row in preview editor
+    let directlyHoveredComponent = Array.from(document.querySelectorAll(':hover')).filter(
+      e => e.hasAttribute('comptype') ||
+        e.hasAttribute('editor-comptype') ||
+        e.hasAttribute('row-container-editor-comptype') ||
+        e.hasAttribute('editor-section-id')
+    ).pop() as HTMLElement | undefined;
 
-      if (directlyHoveredComponent) {
-        const componentPair = this.coordinator.findComponentPair(directlyHoveredComponent);
-        this.coordinator.synchronizeHover(componentPair, this.page!);
-      }
-    }, 0);
-  }
-
-  private handleComponentHover(
-    fragment: HTMLElement,
-    componentType: PageComponentNames,
-    isPreviewHover: boolean,
-    hoverState: HoverState,
-    containerType?: PageGridComponentNames
-  ): void {
-    const shouldAddSecondaryHover = this.shouldAddSecondaryHover(componentType, containerType);
-    const shiftDown = hoverState.event?.shiftKey;
-
-    if (isPreviewHover) {
-      if (shiftDown && !document.querySelector('#editorButtonContainer:hover')) {
-        this.coordinator.hoverDirectParent(fragment, this.page!, isPreviewHover);
-      } else {
-        this.uiManager.addPreviewComponentHover(fragment, this.page!, {
-          addOutline: true,
-          addSecondaryHover: shouldAddSecondaryHover && !!hoverState.event
-        });
-      }
-    } else {
-      // Editor component hover - also hover the corresponding preview component
-      this.uiManager.addEditorComponentHover(fragment);
-      
-      // Get the correct component ID for editor elements
-      const editorId = fragment.getAttribute('editor-id') || 
-                      fragment.getAttribute('row-container-editor-id') || 
-                      fragment.getAttribute('editor-section-id') ||
-                      hoverState.componentId;
-      
-      // Find and hover the corresponding preview component
-      const previewComponent = document.querySelector(`[id="${editorId}"]`) as HTMLElement;
-      if (previewComponent) {
-        this.uiManager.addPreviewComponentHover(previewComponent, this.page!, {
-          addOutline: true,
-          addSecondaryHover: shouldAddSecondaryHover && !!hoverState.event
-        });
-      }
-    }
-
-    if (hoverState.event) {
-      this.handleNonTargetElements(hoverState.event, hoverState.componentId);
-    }
-    
-    this.uiManager.updateEditorButtonZIndex(fragment, '1022', isPreviewHover);
-  }
-
-  private handleComponentUnhover(fragment: HTMLElement, isPreviewHover: boolean): void {
-    this.uiManager.removeComponentHover(fragment, this.page!, isPreviewHover);
-    
-    // If this is an editor component, also remove hover from corresponding preview component
-    if (!isPreviewHover) {
-      const componentId = fragment.getAttribute('editor-id') || 
-                          fragment.getAttribute('row-container-editor-id') || 
-                          fragment.getAttribute('editor-section-id');
-      
-      if (componentId) {
-        const previewComponent = document.querySelector(`[id="${componentId}"]`) as HTMLElement;
-        if (previewComponent) {
-          this.uiManager.removeComponentHover(previewComponent, this.page!, true);
+    // Remove all hover-related attributes from any hovered preview components.
+    document.querySelectorAll<HTMLElement>('.hover-overlay.hovered')
+      .forEach((overlay) => {
+        const component = overlay.parentElement;
+        if (component && component.hasAttribute('comptype')) {
+          this.hoverUIManager.removeHoverRelatedAttributesFromElement(component, isPreviewHover);
         }
+      });
+
+    if (directlyHoveredComponent) {
+      let previewComponent: HTMLElement | undefined = undefined;
+      let editorComponent: HTMLElement | undefined = undefined;
+
+      const isEditorRowContainer = directlyHoveredComponent.hasAttribute('row-container-editor-comptype');
+      const isEditorSectionContainer = directlyHoveredComponent.hasAttribute('editor-section-id');
+      const isEditorComponent = directlyHoveredComponent.hasAttribute('editor-comptype');
+      const isPreviewComponent = directlyHoveredComponent.hasAttribute('comptype');
+
+      if (isEditorComponent) {
+        editorComponent = directlyHoveredComponent;
+        previewComponent = document.querySelector(`[id="${directlyHoveredComponent.getAttribute('editor-id')}"]`) as HTMLElement | undefined;
+      } else if (isEditorRowContainer) {
+        editorComponent = directlyHoveredComponent;
+        previewComponent = document.querySelector(`[id="${directlyHoveredComponent.getAttribute('row-container-editor-id')}"]`) as HTMLElement | undefined;
+      } else if (isEditorSectionContainer) {
+        editorComponent = directlyHoveredComponent;
+        previewComponent = document.querySelector(`[id="${directlyHoveredComponent.getAttribute('editor-section-id')}"]`) as HTMLElement | undefined;
+      } else if (isPreviewComponent) {
+        editorComponent = document.querySelector(`[editor-id="${directlyHoveredComponent.id}"]`) as HTMLElement | undefined;
+        previewComponent = directlyHoveredComponent;
       }
+
+      // One of them can be undefined for example when a component is selected and the layout manager
+      // does not show the layout of the component that is hovered due to showing the selected component's
+      // settings.
+      if (previewComponent) this.hoverUIManager.hoverPreviewComponentAndParents(previewComponent);
+      if (editorComponent) this.hoverUIManager.hoverEditorComponent(editorComponent);
     }
-    
-    this.uiManager.updateEditorButtonZIndex(fragment, '0', isPreviewHover);
   }
 
-  private handleNonTargetElements(event: MouseEvent, componentId: string): void {
+  // Original handleNonTargetElements logic - EXACTLY as in original
+  public handleNonTargetElements(event: MouseEvent, componentId?: string) {
     const element = event.target as HTMLElement;
-    const targetCompType = element.getAttribute('comptype') as PageComponentNames;
+    const targetCompType = element.getAttribute('comptype');
 
-    const isSecondaryHoveredComponentType = this.SECONDARY_HOVER_COMPONENT_TYPES.includes(targetCompType);
-
-    if (targetCompType && isSecondaryHoveredComponentType) {
-      setTimeout(() => {
-        this.uiManager.removeSpecificHoverClass(element.id, 'hovered-secondary');
-      }, 0);
-    }
-
-    // Handle secondary hover for specific component types
-    this.uiManager.removeSecondaryHoverFromComponents([
+    // Define which component types should be treated as "secondary hovered" (special UI behavior)
+    const secondaryHoveredComponentTypes = [
+      PageComponentNames.section,
+      PageComponentNames.button,
       PageComponentNames.row,
       PageComponentNames.detail,
       PageComponentNames.column,
-      PageComponentNames.card,
-      PageComponentNames.section,
-      PageComponentNames.filterBar,
-      PageComponentNames.button
-    ], componentId);
+      PageComponentNames.card
+    ];
 
-    // Remove hover from all other components
-    this.uiManager.removeAllHoveredComponents(componentId, this.SECONDARY_HOVER_COMPONENT_TYPES);
+    const isSecondaryHoveredComponentType = secondaryHoveredComponentTypes.includes(targetCompType as PageComponentNames);
+
+    // Find components that should get secondary hover (avoiding :has for performance)
+    const allOverlays = document.querySelectorAll<HTMLElement>('.hover-overlay.hovered');
+    const secondaryHoveredComponents: HTMLElement[] = [];
+    const allHoveredComponents: HTMLElement[] = [];
+
+    allOverlays.forEach(overlay => {
+      const component = overlay.parentElement as HTMLElement;
+      if (!component || component.id === componentId) return;
+      
+      const compType = component.getAttribute('comptype') as PageComponentNames;
+      if (secondaryHoveredComponentTypes.includes(compType)) {
+        secondaryHoveredComponents.push(component);
+      } else {
+        allHoveredComponents.push(component);
+      }
+    });
+
+    // Add hovered editor components
+    const hoveredEditorComponents = document.querySelectorAll<HTMLElement>(`[editor-id].hovered:not([editor-id="${componentId}"])`);
+    hoveredEditorComponents.forEach(el => allHoveredComponents.push(el));
+
+    const allHoveredEditorSections = document.querySelectorAll<HTMLElement>('.section-content.hovered');
+
+    if (targetCompType && isSecondaryHoveredComponentType) {
+      setTimeout(() => {
+        this.hoverUIManager.getHoverOverlayEl(element.id)?.classList.remove('hovered-secondary');
+        
+        // Show floating label again for component that transitions back to primary hover
+        this.hoverUIManager.toggleFloatingLabel(element, true, false);
+      }, 0);
+    }
+
+    secondaryHoveredComponents.forEach((element: HTMLElement) => {
+      setTimeout(() => {
+        const hoverOverlayEl = this.hoverUIManager.getHoverOverlayEl(element.id);
+        hoverOverlayEl?.classList.remove('outlined');
+        hoverOverlayEl?.classList.add('hovered-secondary');
+        
+        // Hide floating label for components that get secondary hover (parents)
+        this.hoverUIManager.toggleFloatingLabel(element, false);
+      }, 0);
+    });
+
+    allHoveredEditorSections.forEach((el: HTMLElement) => {
+      const dragHandleElem = el.children[1];
+      if (dragHandleElem && dragHandleElem.getAttribute('editor-id') == componentId) return;
+
+      this.hoverUIManager.removeHoverRelatedAttributesFromElement(el, false);
+    });
+
+    allHoveredComponents.forEach((el: HTMLElement) => {
+      if (element == el) return;
+
+      const isPreview = el.hasAttribute('editor-id') ? false : true;
+      this.hoverUIManager.removeHoverRelatedAttributesFromElement(el, isPreview);
+    });
   }
 
-  private onKeyDown(e: KeyboardEvent): void {
+  // ================================
+  // KEYBOARD EVENTS - EXACTLY as in original
+  // ================================
+
+  private onKeyDown(e: KeyboardEvent) {
     if (e.repeat || !this.page) return;
 
+    // If the Shift key has been pressed
     if (e.shiftKey) {
-      const directlyHoveredComponent = this.coordinator.findPreviewHoveredComponent();
-      
+      // Get the preview component that is currently hovered
+      const directlyHoveredComponent = this.hoverUIManager.getDirectlyPreviewHoveredComponent();
+
       if (directlyHoveredComponent) {
-        this.coordinator.removeAllHoveredComponentsExcept(directlyHoveredComponent.id, this.page);
-        this.coordinator.hoverDirectParent(directlyHoveredComponent, this.page, true);
+        // Find all currently hovered preview components and unhover them.
+        document.querySelectorAll<HTMLElement>('.hover-overlay.hovered')
+          .forEach((overlay) => {
+            const component = overlay.parentElement;
+            if (component && component.hasAttribute('comptype')) {
+              this.hoverUIManager.removeHoverRelatedAttributesFromElement(component, true);
+            }
+          });
+
+        // Hover the direct parent component of the currently hovered component (#10940).
+        this.hoverUIManager.hoverDirectParent(directlyHoveredComponent, true);
       }
     }
   }
 
-  private onKeyUp(e: KeyboardEvent): void {
+  private onKeyUp(e: KeyboardEvent) {
     if (!this.page) return;
 
+    // If the Shift key has been released
     if (!e.shiftKey) {
-      const directlyHoveredComponent = this.coordinator.findPreviewHoveredComponent();
-      
+      // Get the preview component that is currently hovered
+      const directlyHoveredComponent = this.hoverUIManager.getDirectlyPreviewHoveredComponent();
+
       if (directlyHoveredComponent) {
-        this.coordinator.removeAllHoveredComponentsExcept(directlyHoveredComponent.id, this.page);
-        this.coordinator.hoverPreviewComponentAndParents(directlyHoveredComponent, this.page);
-        
+        // Remove all hover-related attributes from any hovered preview components.
+        document.querySelectorAll<HTMLElement>('[comptype].hovered')
+          .forEach((component) => this.hoverUIManager.removeHoverRelatedAttributesFromElement(component, true));
+
+        this.hoverUIManager.hoverPreviewComponentAndParents(directlyHoveredComponent);
         const editorComponent = document.querySelector(`[editor-id="${directlyHoveredComponent.id}"]`) as HTMLElement;
-        this.uiManager.addEditorComponentHover(editorComponent);
+        if (editorComponent) this.hoverUIManager.hoverEditorComponent(editorComponent);
       }
     }
   }
 
-  private shouldAddSecondaryHover(componentType: PageComponentNames, containerType?: PageGridComponentNames): boolean {
-    return componentType === PageComponentNames.detail && 
-           containerType !== PageGridComponentNames.detail;
-  }
+  // ================================
+  // UTILITY METHODS
+  // ================================
 
-  private preventEventPropagation(event?: MouseEvent): void {
+  private preventEventPropagation(event?: MouseEvent) {
     event?.preventDefault();
     event?.stopImmediatePropagation();
     event?.stopPropagation();
   }
 
-  private initializePageSubscription(): void {
-    this.subscriptions.push(
-      this.store.select(state => state.report.pagePreview.loadedPage).subscribe((loadedPage?: Page) => {
-        if (loadedPage) this.page = loadedPage;
-      })
-    );
-  }
-
-  private initializeKeyboardListeners(): void {
-    document.addEventListener("keydown", this.keyDownListenerMethod);
-    document.addEventListener("keyup", this.keyUpListenerMethod);
-  }
-
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
     document.removeEventListener("keydown", this.keyDownListenerMethod);
     document.removeEventListener("keyup", this.keyUpListenerMethod);
   }

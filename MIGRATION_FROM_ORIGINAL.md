@@ -42,7 +42,36 @@ export class MyComponent implements OnInit, OnDestroy {
 }
 ```
 
-### After (New HoverSystem)
+### After (New Modular System)
+
+```typescript
+import { HoverManager } from './path/to/hover-system';
+
+export class MyComponent implements OnInit, OnDestroy {
+  private hoverSubscription?: Subscription;
+
+  constructor(private hoverManager: HoverManager) {}
+
+  ngOnInit() {
+    // Single call replaces both initHoverHelper + listenForHoverRelatedEvents
+    this.hoverSubscription = this.hoverManager.setupComponentHover(
+      this.elementRef.nativeElement,
+      this.isPreviewHover,
+      this.componentType,
+      this.componentId,
+      this.previewMode,
+      this.containerType
+    );
+  }
+
+  ngOnDestroy() {
+    this.hoverSubscription?.unsubscribe();
+    this.hoverManager.destroyComponentHover(this.componentId);
+  }
+}
+```
+
+### Alternative: Legacy Unified System
 
 ```typescript
 import { HoverSystem } from './path/to/hover-system';
@@ -121,12 +150,12 @@ breadcrumbElement.addEventListener('mouseleave', () => {
 
 ### After
 ```typescript
-// Breadcrumb hover with new system
+// Breadcrumb hover with new modular system
 breadcrumbElement.addEventListener('mouseenter', (mouseEvent) => {
-  this.hoverSystem.setComponentHoverState(componentId, true, mouseEvent);
+  this.hoverManager.setComponentHoverState(componentId, true, mouseEvent);
 });
 breadcrumbElement.addEventListener('mouseleave', () => {
-  this.hoverSystem.setComponentHoverState(componentId, false);
+  this.hoverManager.setComponentHoverState(componentId, false);
 });
 ```
 

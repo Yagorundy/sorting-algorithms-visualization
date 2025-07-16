@@ -2,9 +2,8 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 
 export interface HoverState {
-  isHovered: boolean;
+  isHovered?: boolean;
   event?: MouseEvent;
-  componentId: string;
 }
 
 @Injectable({
@@ -25,31 +24,32 @@ export class HoverStateManager implements OnDestroy {
     return this.getOrCreateSubject(componentId).asObservable();
   }
 
-  public setHoverState(componentId: string, isHovered: boolean, event?: MouseEvent): void {
+  public removeHoverObservable(componentId: string) {
+    this.hoverSubjects.get(componentId)?.complete();
+    this.hoverSubjects.delete(componentId);
+  }
+
+  public setHoverState(componentId: string, isHovered: boolean, event?: MouseEvent) {
     const subject = this.getOrCreateSubject(componentId);
-    subject.next({ isHovered, event, componentId });
+    subject.next({ isHovered, event });
   }
 
-  public removeHoverObservable(componentId: string): void {
-    const subject = this.hoverSubjects.get(componentId);
-    if (subject) {
-      subject.complete();
-      this.hoverSubjects.delete(componentId);
-    }
-  }
-
-  public hasHoverObservable(componentId: string): boolean {
+  public hasHoverFunctionality(componentId: string): boolean {
     return this.hoverSubjects.has(componentId);
   }
 
-  public clearAllHoverStates(): void {
-    this.hoverSubjects.forEach((subject, componentId) => {
-      subject.next({ isHovered: false, componentId });
-    });
+  public destroy(componentId: string) {
+    // Note: Original logic returns early if element exists - keeping this for exact compatibility  
+    let element = document.querySelector<HTMLElement>(`[id="${componentId}"]`) as HTMLElement;
+    if (element) return;
+    this.removeHoverObservable(componentId);
   }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
+    
+    // Clean up all hover subjects
     this.hoverSubjects.forEach(subject => subject.complete());
     this.hoverSubjects.clear();
   }

@@ -1,102 +1,75 @@
 import { Injectable } from '@angular/core';
-import { Page } from '@common/data/page/Page';
 import { HoverUIManager } from './hover-ui-manager';
 
 export interface ComponentPair {
-  previewComponent: HTMLElement | null;
-  editorComponent: HTMLElement | null;
+  previewComponent?: HTMLElement;
+  editorComponent?: HTMLElement;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class HoverCoordinator {
-  
-  constructor(private uiManager: HoverUIManager) {}
 
-  public findDirectlyHoveredComponent(): HTMLElement | null {
-    return Array.from(document.querySelectorAll(':hover'))
-      .filter(e => 
-        e.hasAttribute('comptype') ||
-        e.hasAttribute('editor-comptype') ||
-        e.hasAttribute('row-container-editor-comptype') ||
-        e.hasAttribute('editor-section-id')
-      )
-      .pop() as HTMLElement | null;
-  }
+  constructor(private hoverUIManager: HoverUIManager) {}
 
-  public findPreviewHoveredComponent(): HTMLElement | null {
-    return Array.from(document.querySelectorAll(':hover'))
-      .filter(e => e.hasAttribute('comptype') && !e.hasAttribute('editor-id'))
-      .pop() as HTMLElement | null;
-  }
+  // ================================
+  // COMPONENT COORDINATION
+  // ================================
 
-  public findComponentPair(hoveredElement: HTMLElement): ComponentPair {
-    let previewComponent: HTMLElement | null = null;
-    let editorComponent: HTMLElement | null = null;
+  /**
+   * Find preview and editor component pair for synchronization
+   */
+  public findComponentPair(hoveredComponent: HTMLElement): ComponentPair {
+    let previewComponent: HTMLElement | undefined = undefined;
+    let editorComponent: HTMLElement | undefined = undefined;
 
-    const isEditorRowContainer = hoveredElement.hasAttribute('row-container-editor-comptype');
-    const isEditorSectionContainer = hoveredElement.hasAttribute('editor-section-id');
-    const isEditorComponent = hoveredElement.hasAttribute('editor-comptype');
-    const isPreviewComponent = hoveredElement.hasAttribute('comptype');
+    const isEditorRowContainer = hoveredComponent.hasAttribute('row-container-editor-comptype');
+    const isEditorSectionContainer = hoveredComponent.hasAttribute('editor-section-id');
+    const isEditorComponent = hoveredComponent.hasAttribute('editor-comptype');
+    const isPreviewComponent = hoveredComponent.hasAttribute('comptype');
 
     if (isEditorComponent) {
-      editorComponent = hoveredElement;
-      const editorId = hoveredElement.getAttribute('editor-id');
-      previewComponent = editorId ? document.querySelector(`[id="${editorId}"]`) as HTMLElement : null;
+      editorComponent = hoveredComponent;
+      previewComponent = document.querySelector(`[id="${hoveredComponent.getAttribute('editor-id')}"]`) as HTMLElement | undefined;
     } else if (isEditorRowContainer) {
-      editorComponent = hoveredElement;
-      const containerId = hoveredElement.getAttribute('row-container-editor-id');
-      previewComponent = containerId ? document.querySelector(`[id="${containerId}"]`) as HTMLElement : null;
+      editorComponent = hoveredComponent;
+      previewComponent = document.querySelector(`[id="${hoveredComponent.getAttribute('row-container-editor-id')}"]`) as HTMLElement | undefined;
     } else if (isEditorSectionContainer) {
-      editorComponent = hoveredElement;
-      const sectionId = hoveredElement.getAttribute('editor-section-id');
-      previewComponent = sectionId ? document.querySelector(`[id="${sectionId}"]`) as HTMLElement : null;
+      editorComponent = hoveredComponent;
+      previewComponent = document.querySelector(`[id="${hoveredComponent.getAttribute('editor-section-id')}"]`) as HTMLElement | undefined;
     } else if (isPreviewComponent) {
-      previewComponent = hoveredElement;
-      editorComponent = document.querySelector(`[editor-id="${hoveredElement.id}"]`) as HTMLElement;
+      editorComponent = document.querySelector(`[editor-id="${hoveredComponent.id}"]`) as HTMLElement | undefined;
+      previewComponent = hoveredComponent;
     }
 
     return { previewComponent, editorComponent };
   }
 
-  public synchronizeHover(componentPair: ComponentPair, page: Page): void {
+  /**
+   * Synchronize hover between preview and editor components
+   */
+  public synchronizeHover(componentPair: ComponentPair): void {
+    // One of them can be undefined for example when a component is selected and the layout manager
+    // does not show the layout of the component that is hovered due to showing the selected component's
+    // settings.
     if (componentPair.previewComponent) {
-      this.hoverPreviewComponentAndParents(componentPair.previewComponent, page);
+      this.hoverUIManager.hoverPreviewComponentAndParents(componentPair.previewComponent);
     }
     if (componentPair.editorComponent) {
-      this.uiManager.addEditorComponentHover(componentPair.editorComponent);
+      this.hoverUIManager.hoverEditorComponent(componentPair.editorComponent);
     }
   }
 
-  public hoverPreviewComponentAndParents(component: HTMLElement, page: Page): void {
-    this.uiManager.addPreviewComponentHover(component, page, { addOutline: true });
-  }
-
-  public hoverDirectParent(component: HTMLElement, page: Page, isPreviewHover: boolean): void {
-    const parent = component.parentElement;
-    if (parent && isPreviewHover) {
-      this.uiManager.addPreviewComponentHover(parent, page, { addOutline: true });
-    }
-  }
-
-  public removeAllHoveredComponentsExcept(excludeComponentId: string, page: Page): void {
-    // Remove hover from all preview components except the excluded one
-    const hoveredPreviewComponents = document.querySelectorAll<HTMLElement>(
-      `[comptype]:has(> .hover-overlay.hovered):not([id="${excludeComponentId}"])`
-    );
-
-    hoveredPreviewComponents.forEach(element => {
-      this.uiManager.removeComponentHover(element, page, true);
-    });
-
-    // Remove hover from all editor components except the excluded one  
-    const hoveredEditorComponents = document.querySelectorAll<HTMLElement>(
-      `[editor-id].hovered:not([editor-id="${excludeComponentId}"])`
-    );
-
-    hoveredEditorComponents.forEach(element => {
-      this.uiManager.removeComponentHover(element, page, false);
-    });
+  /**
+   * Find the currently hovered component in preview area
+   */
+  public findDirectlyHoveredComponent(): HTMLElement | undefined {
+    return Array.from(document.querySelectorAll(':hover')).filter(
+      e => e.hasAttribute('comptype') ||
+        e.hasAttribute('editor-comptype') ||
+        e.hasAttribute('row-container-editor-comptype') ||
+        e.hasAttribute('editor-section-id')
+    ).pop() as HTMLElement | undefined;
   }
 }

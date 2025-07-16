@@ -1,178 +1,140 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { Page } from '@common/data/page/Page';
-import { PageComponentNames } from "@common/data/page/PageComponentNames";
-import { ReportFilesService } from '@shared/services/reports/report-files.service';
+import { Store } from '@ngrx/store';
 import { isDisabledCarouselSlide } from '@report-editor-components/helpers/editor-component.helper';
+import { ReportFilesService } from '@shared/services/reports/report-files.service';
+import { Subscription } from 'rxjs';
+import { AppState } from 'src/app/app.state';
 
 @Injectable({
   providedIn: 'root'
 })
-export class HoverUIManager {
-  
-  constructor(private mediaService: ReportFilesService) {}
+export class HoverUIManager implements OnDestroy {
+  private page?: Page;
+  private subscriptions: Subscription[] = [];
 
-  public getHoverOverlayElement(componentId: string): HTMLElement | null {
-    return document.getElementById(`hover-overlay_${componentId}`);
+  constructor(
+    private mediaService: ReportFilesService,
+    private store: Store<AppState>,
+  ) {
+    this.subscriptions.push(
+      this.store.select(state => state.report.pagePreview.loadedPage).subscribe((loadedPage?: Page) => {
+        if (loadedPage) this.page = loadedPage;
+      }),
+    );
   }
 
-  public addPreviewComponentHover(
-    componentElement: HTMLElement, 
-    page: Page,
-    options: {
-      addOutline?: boolean;
-      addSecondaryHover?: boolean;
-    } = {}
-  ): void {
-    if (!componentElement || !this.canHoverComponent(componentElement)) {
-      return;
-    }
+  // ================================
+  // DOM MANIPULATION METHODS
+  // ================================
 
-    const hoverOverlayEl = this.getHoverOverlayElement(componentElement.id);
-    if (!hoverOverlayEl) return;
-
-    const classList: string[] = ['hovered'];
-
-    if (options.addOutline && !componentElement.classList.contains("selected")) {
-      classList.push('outlined');
-    }
-
-    if (options.addSecondaryHover) {
-      classList.push('hovered-secondary');
-    } else {
-      hoverOverlayEl.classList.remove('hovered-secondary');
-    }
-
-    hoverOverlayEl.classList.add(...classList);
-
-    this.updateBackgroundImageForHover(componentElement, page);
-    
-    // Handle related element visibility
-    this.toggleRelatedElements(componentElement, true, options.addSecondaryHover);
+  public getHoverOverlayEl(id: string) {
+    return document.getElementById(`hover-overlay_${id}`);
   }
 
-  public addEditorComponentHover(editorElement: HTMLElement | null): void {
-    if (!editorElement) return;
-    
-    // Handle drag-handle case
-    if (editorElement.classList.contains('drag-handle')) {
-      editorElement = editorElement.parentElement!;
+  public removeHoverRelatedAttributesFromElement(componentElement: HTMLElement, isPreviewHover: boolean) {
+    if (!this.page || !this.page.components) return;
+
+    if (isPreviewHover) {
+      // Restore original background image
+      componentElement.style.backgroundImage = this.page.components.data[componentElement.id]?.styles.backgroundImageOptimizations ? 
+        `url(${this.mediaService.getBackground(this.page!.components.data[componentElement.id]?.styles.backgroundImageOptimizations, this.page!.components.data[componentElement.id]?.styles.backgroundImageSize).backgroundSrc})` : '';
     }
-    
-    editorElement?.classList.add('hovered');
-  }
 
-  public removeComponentHover(componentElement: HTMLElement, page: Page, isPreviewComponent: boolean): void {
-    if (!componentElement || !page?.components) return;
-
-    if (isPreviewComponent) {
-      this.restoreOriginalBackgroundImage(componentElement, page);
-      const hoverOverlay = this.getHoverOverlayElement(componentElement.id);
-      hoverOverlay?.classList.remove('hovered', 'outlined', 'hovered-secondary');
-      
-      // Hide related elements
-      this.toggleRelatedElements(componentElement, false);
+    if (componentElement.hasAttribute('comptype')) {
+      this.getHoverOverlayEl(componentElement.id)?.classList.remove('hovered', 'outlined', 'hovered-secondary');
     } else {
       componentElement.classList.remove('hovered');
     }
+
+    // Handle floating label visibility with optimized approach
+    this.toggleFloatingLabel(componentElement, false);
   }
 
-  public updateEditorButtonZIndex(fragment: HTMLElement, zIndex: string, isPreviewHover: boolean): void {
+  /**
+   * Original hoverPreviewComponent logic with floating label enhancement
+   */
+  public hoverPreviewComponent(componentElement: HTMLElement | null, addOutline?: boolean, addSecondaryHover?: boolean) {
+    if (!componentElement) return;
+
+    // Do no display "layout" hover icon buttons when detail dialog is opened (detailsLayout)
+    const detailDialog = document.querySelector(".detail-dialog");
+    if (detailDialog && !detailDialog.contains(componentElement)) return;
+
+    // Prevent hover effects if the component is inside a carousel slide which isn't active, and
+    // if the carousel has a class of "disable-hover-on-inactive-slides".
+    if (isDisabledCarouselSlide(componentElement)) return;
+
+    const hoverOverlayEl = this.getHoverOverlayEl(componentElement.id);
+
+    const classList: string[] = ['hovered'];
+
+    if (addOutline && !componentElement.classList.contains("selected")) {
+      classList.push('outlined');
+    }
+
+    if (addSecondaryHover) {
+      classList.push('hovered-secondary');
+    } else {
+      hoverOverlayEl?.classList.remove('hovered-secondary');
+    }
+
+    hoverOverlayEl?.classList.add(...classList);
+
+    const component = this.page!.components.data[componentElement.id];
+
+    if (component?.styles.states?.hover.backgroundImageOptimizations)
+      componentElement.style.backgroundImage = `url(${this.mediaService.getBackground(component.styles.states.hover.backgroundImageOptimizations).backgroundSrc})`;
+    else if (component?.styles.backgroundImageOptimizations && component?.styles.states?.hover.removedBackgroundImageForState)
+      componentElement.style.backgroundImage = '';
+
+    // Handle floating label visibility with optimized approach
+    this.toggleFloatingLabel(componentElement, true, addSecondaryHover);
+  }
+
+  public hoverPreviewComponentAndParents(componentElement: HTMLElement | null) {
+    if (!componentElement) return;
+    this.hoverPreviewComponent(componentElement, true);
+  }
+
+  public hoverDirectParent(componentElement: HTMLElement | null, isPreviewHover: boolean) {
+    if (!componentElement) return;
+
+    const parent: HTMLElement | null = componentElement.parentElement;
+    if (parent && isPreviewHover) this.hoverPreviewComponent(parent, true);
+  }
+
+  public hoverEditorComponent(editorElement: HTMLElement | null) {
+    if (!editorElement) return;
+    if (editorElement?.classList.contains('drag-handle')) editorElement = editorElement.parentElement!;
+    editorElement?.classList.add('hovered');
+  }
+
+  // Change zIndex of hovered editor-button of a child component inside a Column container in the Layout manager
+  public changeIndexOfHoverButton(value: string, fragment: HTMLElement, isPreviewHover: boolean) {
     if (isPreviewHover) return;
 
-    const editorButtonElement = fragment.querySelector('#editorButton') as HTMLElement;
+    const targetElement = fragment;
+    const editorButtonElement = targetElement.querySelector('#editorButton') as HTMLElement;
     if (editorButtonElement) {
-      editorButtonElement.style.zIndex = zIndex;
+      editorButtonElement.style.zIndex = value;
     }
   }
 
-  public removeSecondaryHoverFromComponents(
-    componentTypes: PageComponentNames[], 
-    excludeComponentId?: string
-  ): void {
-    const selector = componentTypes
-      .map(type => `[comptype="${type}"]:has(> .hover-overlay.hovered)${excludeComponentId ? `:not([id="${excludeComponentId}"])` : ''}`)
-      .join(',');
+  // ================================
+  // FLOATING LABEL MANAGEMENT
+  // ================================
 
-    const components = document.querySelectorAll<HTMLElement>(selector);
+  // ENHANCEMENT: Optimized floating label toggle with CSS classes
+  public toggleFloatingLabel(componentElement: HTMLElement, isHovered: boolean, isSecondaryHover?: boolean) {
+    const isSelected = componentElement.classList.contains('selected');
     
-    components.forEach((element: HTMLElement) => {
-      setTimeout(() => {
-        const hoverOverlayEl = this.getHoverOverlayElement(element.id);
-        hoverOverlayEl?.classList.remove('outlined');
-        hoverOverlayEl?.classList.add('hovered-secondary');
-        
-        // Update related elements for secondary hover
-        this.toggleRelatedElements(element, true, true);
-      }, 0);
-    });
-  }
-
-  public removeAllHoveredComponents(excludeComponentId?: string, excludeTypes: PageComponentNames[] = []): void {
-    const excludeTypeSelectors = excludeTypes.map(type => `:not([comptype="${type}"])`).join('');
-    const selector = `[comptype]:has(> .hover-overlay.hovered)${excludeComponentId ? `:not([id="${excludeComponentId}"])` : ''}${excludeTypeSelectors},[editor-id].hovered${excludeComponentId ? `:not([editor-id="${excludeComponentId}"])` : ''}`;
+    // Show floating labels if:
+    // 1. Component is selected (always show for selected components)
+    // 2. Component is directly hovered (not secondary hover from parent)
+    const shouldShow = isSelected || (isHovered && !isSecondaryHover);
     
-    const allHoveredComponents = document.querySelectorAll<HTMLElement>(selector);
-    const allHoveredEditorSections = document.querySelectorAll<HTMLElement>('.section-content.hovered');
-
-    allHoveredEditorSections.forEach((el: HTMLElement) => {
-      const dragHandleElem = el.children[1];
-      if (dragHandleElem && dragHandleElem.getAttribute('editor-id') === excludeComponentId) return;
-      
-      el.classList.remove('hovered');
-    });
-
-    allHoveredComponents.forEach((el: HTMLElement) => {
-      const isPreview = !el.hasAttribute('editor-id');
-      if (isPreview) {
-        const hoverOverlay = this.getHoverOverlayElement(el.id);
-        hoverOverlay?.classList.remove('hovered', 'outlined', 'hovered-secondary');
-        
-        // Hide related elements when removing hover
-        this.toggleRelatedElements(el, false);
-      } else {
-        el.classList.remove('hovered');
-      }
-    });
-  }
-
-  public removeSpecificHoverClass(componentId: string, className: string): void {
-    setTimeout(() => {
-      this.getHoverOverlayElement(componentId)?.classList.remove(className);
-    }, 0);
-  }
-
-  /**
-   * Toggle visibility of related elements like floating labels
-   * Replaces expensive CSS selectors like :has() with direct DOM manipulation
-   */
-  public toggleRelatedElements(
-    componentElement: HTMLElement, 
-    isHovered: boolean, 
-    isSecondaryHover: boolean = false
-  ): void {
-    // Handle floating labels
-    this.toggleFloatingLabels(componentElement, isHovered, isSecondaryHover);
-    
-    // Handle other related elements
-    this.toggleComponentButtons(componentElement, isHovered, isSecondaryHover);
-    this.toggleResizeHandles(componentElement, isHovered, isSecondaryHover);
-    
-    // Add more related element handlers as needed
-  }
-
-  /**
-   * Toggle floating label visibility by ID using CSS class
-   * Replaces: [comptype]:has(> .hover-overlay.hovered:not(.hovered-secondary)):not(.selected)>component-label div.floating-label
-   */
-  public toggleFloatingLabels(
-    componentElement: HTMLElement, 
-    isHovered: boolean, 
-    isSecondaryHover: boolean = false
-  ): void {
-    // Only show floating labels for primary hover (not secondary) and when not selected
-    const shouldShow = isHovered && !isSecondaryHover && !componentElement.classList.contains('selected');
-    
-    // Target the specific floating label by component ID
+    // Direct ID lookup for maximum performance
     const componentId = componentElement.id;
     const floatingLabel = document.getElementById(`component-label_${componentId}`);
     
@@ -185,87 +147,19 @@ export class HoverUIManager {
     }
   }
 
-  /**
-   * Toggle component action buttons visibility
-   */
-  public toggleComponentButtons(
-    componentElement: HTMLElement, 
-    isHovered: boolean, 
-    isSecondaryHover: boolean = false
-  ): void {
-    const buttons = componentElement.querySelectorAll<HTMLElement>('.component-action-buttons');
-    
-    buttons.forEach(button => {
-      button.style.visibility = isHovered && !isSecondaryHover ? 'visible' : 'hidden';
-    });
+  // ================================
+  // UTILITY METHODS
+  // ================================
+
+  // This function is written to search specifically only in the preview and not in the layout manager,
+  // which is necessary #10940 to work properly.
+  public getDirectlyPreviewHoveredComponent() {
+    return Array.from(document.querySelectorAll(':hover'))
+      .filter(e => e.hasAttribute('comptype') && !e.hasAttribute('editor-id')).pop() as HTMLElement | undefined;
   }
 
-  /**
-   * Toggle resize handles visibility
-   */
-  public toggleResizeHandles(
-    componentElement: HTMLElement, 
-    isHovered: boolean, 
-    isSecondaryHover: boolean = false
-  ): void {
-    const handles = componentElement.querySelectorAll<HTMLElement>('.resize-handle');
-    
-    handles.forEach(handle => {
-      handle.style.visibility = isHovered && !isSecondaryHover ? 'visible' : 'hidden';
-    });
-  }
-
-  /**
-   * Add custom element toggles for specific use cases
-   */
-  public addCustomElementToggle(
-    selector: string,
-    toggleFunction: (element: HTMLElement, isHovered: boolean, isSecondaryHover: boolean) => void
-  ): void {
-    // Store custom toggles in a map if needed for dynamic behavior
-    // This allows other parts of the application to register custom element behaviors
-  }
-
-  private canHoverComponent(componentElement: HTMLElement): boolean {
-    // Do not display hover when detail dialog is opened
-    const detailDialog = document.querySelector(".detail-dialog");
-    if (detailDialog && !detailDialog.contains(componentElement)) {
-      return false;
-    }
-
-    // Prevent hover effects if component is in disabled carousel slide
-    if (isDisabledCarouselSlide(componentElement)) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private updateBackgroundImageForHover(componentElement: HTMLElement, page: Page): void {
-    const component = page.components.data[componentElement.id];
-    
-    if (component?.styles.states?.hover.backgroundImageOptimizations) {
-      const backgroundSrc = this.mediaService.getBackground(
-        component.styles.states.hover.backgroundImageOptimizations
-      ).backgroundSrc;
-      componentElement.style.backgroundImage = `url(${backgroundSrc})`;
-    } else if (component?.styles.backgroundImageOptimizations && 
-               component?.styles.states?.hover.removedBackgroundImageForState) {
-      componentElement.style.backgroundImage = '';
-    }
-  }
-
-  private restoreOriginalBackgroundImage(componentElement: HTMLElement, page: Page): void {
-    const component = page.components.data[componentElement.id];
-    
-    if (component?.styles.backgroundImageOptimizations) {
-      const backgroundSrc = this.mediaService.getBackground(
-        component.styles.backgroundImageOptimizations,
-        component.styles.backgroundImageSize
-      ).backgroundSrc;
-      componentElement.style.backgroundImage = `url(${backgroundSrc})`;
-    } else {
-      componentElement.style.backgroundImage = '';
-    }
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
   }
 }

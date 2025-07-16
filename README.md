@@ -1,17 +1,17 @@
 # Hover System
 
-A faithful recreation of the original `HoverHelper` + `HoverService` system with optimizations. This unified service maintains all original hover behavior while improving performance.
+A highly optimized, modular hover management system that faithfully recreates the original `HoverHelper` + `HoverService` functionality while providing clean, maintainable architecture.
 
 ## Quick Start
 
 ```typescript
-import { HoverSystem } from './hover-system';
+import { HoverManager } from './path/to/hover-system';
 
-constructor(private hoverSystem: HoverSystem) {}
+constructor(private hoverManager: HoverManager) {}
 
 ngOnInit() {
   // Complete hover setup - faithful recreation of original HoverHelper + HoverService
-  this.hoverSubscription = this.hoverSystem.setupComponentHover(
+  this.hoverSubscription = this.hoverManager.setupComponentHover(
     this.elementRef.nativeElement,
     this.isPreviewHover,
     this.componentType,
@@ -23,7 +23,7 @@ ngOnInit() {
 
 ngOnDestroy() {
   this.hoverSubscription?.unsubscribe();
-  this.hoverSystem.destroy(this.componentId);
+  this.hoverManager.destroyComponentHover(this.componentId);
 }
 ```
 
@@ -31,16 +31,16 @@ ngOnDestroy() {
 
 ```typescript
 // Simple manual triggering
-this.hoverSystem.setComponentHoverState(componentId, true, mouseEvent);
-this.hoverSystem.setComponentHoverState(componentId, false);
+this.hoverManager.setComponentHoverState(componentId, true, mouseEvent);
+this.hoverManager.setComponentHoverState(componentId, false);
 
 // Alternative method (same functionality)
-this.hoverSystem.triggerHover(componentId, true, mouseEvent);
-this.hoverSystem.triggerHover(componentId, false);
+this.hoverManager.triggerHover(componentId, true, mouseEvent);
+this.hoverManager.triggerHover(componentId, false);
 
 // Check if component has hover functionality
-if (this.hoverSystem.hasHoverFunctionality(componentId)) {
-  this.hoverSystem.setComponentHoverState(componentId, true);
+if (this.hoverManager.hasHoverFunctionality(componentId)) {
+  this.hoverManager.setComponentHoverState(componentId, true);
 }
 ```
 
@@ -55,9 +55,29 @@ if (this.hoverSystem.hasHoverFunctionality(componentId)) {
 - **Performance**: 20x faster with direct ID lookups instead of expensive CSS selectors
 - **Simplified API**: Single service replaces the two-class system
 
+## Architecture
+
+The system consists of 5 modular services coordinated by a main facade:
+
+```
+HoverManager (Facade)
+    ├── HoverStateManager (State & Observables)
+    ├── HoverEventHandler (DOM Events & Coordination)
+    ├── HoverUIManager (Visual Effects & DOM Manipulation)
+    └── HoverCoordinator (Preview ↔ Editor Synchronization)
+```
+
+### Core Services
+
+- **`HoverManager`**: Main facade - use this for most interactions
+- **`HoverStateManager`**: Manages hover state observables and subscriptions
+- **`HoverEventHandler`**: Handles mouse/keyboard events and hover logic
+- **`HoverUIManager`**: Manages visual effects, CSS classes, and DOM manipulation
+- **`HoverCoordinator`**: Synchronizes hover between preview and editor components
+
 ## Implementation
 
-The `HoverSystem` is a unified service that recreates all functionality from the original `HoverHelper` and `HoverService` classes:
+The modular system faithfully recreates all functionality from the original `HoverHelper` and `HoverService` classes:
 
 ✅ **Synchronized Hover**: Editor/preview sync during component transitions (exact original behavior)  
 ✅ **Keyboard Support**: Shift key to hover parent components  
@@ -71,8 +91,13 @@ The `HoverSystem` is a unified service that recreates all functionality from the
 
 ## Files
 
-- `hover-system.ts` - Unified hover system with all original functionality
-- `MIGRATION_FROM_ORIGINAL.md` - Migration guide from HoverHelper + HoverService  
+- `hover-manager.ts` - Main facade API
+- `hover-state-manager.ts` - State management and observables
+- `hover-event-handler.ts` - Event handling and coordination
+- `hover-ui-manager.ts` - DOM manipulation and visual effects
+- `hover-coordinator.ts` - Preview/editor synchronization
+- `hover-system.ts` - Legacy unified system (for comparison)
+- `MIGRATION_FROM_ORIGINAL.md` - Migration guide from HoverHelper + HoverService
 - `index.ts` - Exports
 - `README.md` - This documentation
 
@@ -119,26 +144,26 @@ Perfect for breadcrumbs, external controls, or custom interactions:
 
 ```typescript
 // Simple manual triggering (preferred method)
-this.hoverSystem.setComponentHoverState(componentId, true, mouseEvent);
-this.hoverSystem.setComponentHoverState(componentId, false);
+this.hoverManager.setComponentHoverState(componentId, true, mouseEvent);
+this.hoverManager.setComponentHoverState(componentId, false);
 
 // Alternative method (same functionality)
-this.hoverSystem.triggerHover(componentId, true, mouseEvent);
-this.hoverSystem.triggerHover(componentId, false);
+this.hoverManager.triggerHover(componentId, true, mouseEvent);
+this.hoverManager.triggerHover(componentId, false);
 
 // Breadcrumb example
 breadcrumbElement.addEventListener('mouseenter', (event) => {
-  this.hoverSystem.setComponentHoverState(componentId, true, event);
+  this.hoverManager.setComponentHoverState(componentId, true, event);
 });
 
 // Bulk operations
 this.breadcrumbItems.forEach(item => {
-  this.hoverSystem.setComponentHoverState(item.id, isHovered);
+  this.hoverManager.setComponentHoverState(item.id, isHovered);
 });
 
 // Safety checks
-if (this.hoverSystem.hasHoverFunctionality(componentId)) {
-  this.hoverSystem.setComponentHoverState(componentId, true);
+if (this.hoverManager.hasHoverFunctionality(componentId)) {
+  this.hoverManager.setComponentHoverState(componentId, true);
 }
 ```
 
@@ -165,7 +190,7 @@ If hover isn't working:
 
 1. **Check Setup**: Verify your component is calling:
    ```typescript
-   this.hoverSubscription = this.hoverSystem.setupComponentHover(...);
+   this.hoverSubscription = this.hoverManager.setupComponentHover(...);
    ```
 
 2. **Check DOM Structure**: Ensure these elements exist:

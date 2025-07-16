@@ -1,4 +1,13 @@
-// Main unified hover system - faithful recreation of original with optimizations
+// Main facade - use this for most component interactions
+export { HoverManager } from './hover-manager';
+
+// Core system components
+export { HoverStateManager, HoverState } from './hover-state-manager';
+export { HoverEventHandler } from './hover-event-handler';
+export { HoverUIManager } from './hover-ui-manager';
+export { HoverCoordinator, ComponentPair } from './hover-coordinator';
+
+// Legacy unified system (for comparison/migration)
 export { HoverSystem } from './hover-system';
 
 // Re-export commonly used types for convenience
