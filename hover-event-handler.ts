@@ -50,7 +50,6 @@ export class HoverEventHandler implements OnDestroy {
 
   // Original onHoverEvent logic
   private onHoverEvent(event: MouseEvent, componentId: string) {
-    console.log(`[HoverEventHandler] Mouse enter on ${componentId}`);
     this.preventEventPropagation(event);
     this.hoverStateManager.setHoverState(componentId, true, event);
   }
