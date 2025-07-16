@@ -40,12 +40,12 @@ export class HoverManager {
     const addSecondaryHover = PageComponentNames.detail == componentType && 
                              !(componentType == PageComponentNames.detail && containerType == PageGridComponentNames.detail);
 
-    // Set up event listeners (original listenForHoverRelatedEvents logic)
+    // CRITICAL: Match original order exactly - condition check FIRST creates the observable
     if (previewMode == PreviewModes.editor && this.hoverStateManager.getHoverObservable(componentId)) {
       this.hoverEventHandler.setupMouseEvents(fragment, componentId, isPreviewHover);
     }
 
-    // Set up hover state subscription (original initHoverHelper logic)
+    // Then set up subscription using the already-created observable
     return this.hoverStateManager.getHoverObservable(componentId).subscribe(result => {
       if (result.isHovered) {
         this.onHover(fragment, isPreviewHover, componentId, result.event, addSecondaryHover);
