@@ -47,7 +47,7 @@ if (this.hoverSystem.hasHoverFunctionality(componentId)) {
 ## Key Features
 
 - **100% Original Logic**: Faithful recreation of all hover behavior from HoverHelper + HoverService
-- **Editor ↔ Preview Sync**: Bi-directional hover synchronization between editor and preview
+- **Editor ↔ Preview Sync**: Synchronization during component transitions (exactly as original)
 - **Keyboard Support**: Shift key for parent component hover navigation
 - **Secondary Hover States**: Special handling for container components (row, section, card, etc.)
 - **Background Images**: Hover state background image changes
@@ -59,7 +59,7 @@ if (this.hoverSystem.hasHoverFunctionality(componentId)) {
 
 The `HoverSystem` is a unified service that recreates all functionality from the original `HoverHelper` and `HoverService` classes:
 
-✅ **Synchronized Hover**: Hovering in editor highlights preview and vice versa  
+✅ **Synchronized Hover**: Editor/preview sync during component transitions (exact original behavior)  
 ✅ **Keyboard Support**: Shift key to hover parent components  
 ✅ **Secondary Hover**: Special hover states for container components  
 ✅ **Background Images**: Hover state background image changes  

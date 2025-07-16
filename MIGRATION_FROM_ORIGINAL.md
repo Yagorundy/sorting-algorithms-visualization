@@ -74,7 +74,7 @@ export class MyComponent implements OnInit, OnDestroy {
 ## What's Preserved
 
 ✅ **Exact Original Logic**: All hover behavior matches the original exactly  
-✅ **Editor ↔ Preview Sync**: Hovering editor components highlights preview and vice versa  
+✅ **Editor ↔ Preview Sync**: Synchronization during component transitions (exactly as original)  
 ✅ **Keyboard Support**: Shift key to hover parent components  
 ✅ **Secondary Hover**: Special hover states for container components (card, section, row, etc.)  
 ✅ **Background Images**: Hover state background image changes  
@@ -135,7 +135,7 @@ breadcrumbElement.addEventListener('mouseleave', () => {
 1. **Simplified API**: One service instead of two
 2. **Better Performance**: Optimized DOM queries and CSS class usage
 3. **Same Behavior**: Identical hover logic to the original
-4. **Enhanced Sync**: Improved editor ↔ preview synchronization
+4. **Exact Sync**: Editor ↔ preview synchronization matches original exactly
 5. **Easy Migration**: Minimal code changes required
 
 ## Card Component Issue Fixed

@@ -167,17 +167,6 @@ export class HoverSystem implements OnDestroy {
       }
     } else {
       this.hoverEditorComponent(element);
-      
-      // ENHANCEMENT: Also hover the corresponding preview component when hovering editor
-      const editorId = element.getAttribute('editor-id') || 
-                      element.getAttribute('row-container-editor-id') || 
-                      element.getAttribute('editor-section-id') ||
-                      componentId;
-      
-      const previewComponent = document.querySelector(`[id="${editorId}"]`) as HTMLElement;
-      if (previewComponent) {
-        this.hoverPreviewComponent(previewComponent, true, addSecondaryHover && !!event);
-      }
     }
 
     if (event) {
@@ -189,21 +178,6 @@ export class HoverSystem implements OnDestroy {
   // Original onUnHover logic
   private onUnHover(fragment: HTMLElement, isPreviewHover: boolean) {
     this.removeHoverRelatedAttributesFromElement(fragment as HTMLElement, true);
-    
-    // ENHANCEMENT: Also remove hover from corresponding preview component when unhover editor
-    if (!isPreviewHover) {
-      const componentId = fragment.getAttribute('editor-id') || 
-                          fragment.getAttribute('row-container-editor-id') || 
-                          fragment.getAttribute('editor-section-id');
-      
-      if (componentId) {
-        const previewComponent = document.querySelector(`[id="${componentId}"]`) as HTMLElement;
-        if (previewComponent) {
-          this.removeHoverRelatedAttributesFromElement(previewComponent, true);
-        }
-      }
-    }
-    
     this.changeIndexOfHoverButton('0', fragment, isPreviewHover);
   }
 
@@ -464,6 +438,7 @@ export class HoverSystem implements OnDestroy {
   }
 
   public destroy(componentId: string) {
+    // Note: Original logic returns early if element exists - keeping this for exact compatibility  
     let element = document.querySelector<HTMLElement>(`[id="${componentId}"]`) as HTMLElement;
     if (element) return;
     this.removeHoverObservable(componentId);
