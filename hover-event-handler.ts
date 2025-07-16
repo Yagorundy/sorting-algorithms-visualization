@@ -82,15 +82,24 @@ export class HoverEventHandler implements OnDestroy {
     this.preventEventPropagation(event);
     this.stateManager.setHoverState(componentId, false, event);
 
-    // Handle hover transition from inner to outer components
-    const directlyHoveredComponent = this.coordinator.findDirectlyHoveredComponent();
-    
-    this.coordinator.removeAllHoveredComponentsExcept(componentId, this.page!);
+    // Handle hover transition from inner to outer components (matching original logic)
+    setTimeout(() => {
+      const directlyHoveredComponent = this.coordinator.findDirectlyHoveredComponent();
+      
+      // Remove all hover-related attributes from any hovered preview components
+      document.querySelectorAll<HTMLElement>('.hover-overlay.hovered')
+        .forEach((overlay) => {
+          const parentComponent = overlay.parentElement;
+          if (parentComponent && parentComponent.hasAttribute('comptype')) {
+            this.uiManager.removeComponentHover(parentComponent, this.page!, true);
+          }
+        });
 
-    if (directlyHoveredComponent) {
-      const componentPair = this.coordinator.findComponentPair(directlyHoveredComponent);
-      this.coordinator.synchronizeHover(componentPair, this.page!);
-    }
+      if (directlyHoveredComponent) {
+        const componentPair = this.coordinator.findComponentPair(directlyHoveredComponent);
+        this.coordinator.synchronizeHover(componentPair, this.page!);
+      }
+    }, 0);
   }
 
   private handleComponentHover(
@@ -132,7 +141,17 @@ export class HoverEventHandler implements OnDestroy {
     const element = event.target as HTMLElement;
     const targetCompType = element.getAttribute('comptype') as PageComponentNames;
 
-    const isSecondaryHoveredComponentType = this.SECONDARY_HOVER_COMPONENT_TYPES.includes(targetCompType);
+    // Define which component types should be treated as "secondary hovered" (special UI behavior)
+    const secondaryHoveredComponentTypes = [
+      PageComponentNames.section,
+      PageComponentNames.button,
+      PageComponentNames.row,
+      PageComponentNames.detail,
+      PageComponentNames.column,
+      PageComponentNames.card
+    ];
+
+    const isSecondaryHoveredComponentType = secondaryHoveredComponentTypes.includes(targetCompType);
 
     if (targetCompType && isSecondaryHoveredComponentType) {
       setTimeout(() => {
@@ -140,19 +159,68 @@ export class HoverEventHandler implements OnDestroy {
       }, 0);
     }
 
-    // Handle secondary hover for specific component types
-    this.uiManager.removeSecondaryHoverFromComponents([
-      PageComponentNames.row,
-      PageComponentNames.detail,
-      PageComponentNames.column,
-      PageComponentNames.card,
-      PageComponentNames.section,
-      PageComponentNames.filterBar,
-      PageComponentNames.button
-    ], componentId);
+    // Find the innermost component being hovered (this should be the primary hover target)
+    const directlyHoveredComponent = this.coordinator.findDirectlyHoveredComponent();
+    const innermostComponentId = directlyHoveredComponent?.id;
 
-    // Remove hover from all other components
-    this.uiManager.removeAllHoveredComponents(componentId, this.SECONDARY_HOVER_COMPONENT_TYPES);
+    // Handle secondary hover for parent components
+    const secondaryHoveredComponents = document.querySelectorAll<HTMLElement>(
+      secondaryHoveredComponentTypes
+        .map(type => `[comptype="${type}"]`)
+        .join(',')
+    );
+
+    secondaryHoveredComponents.forEach((component: HTMLElement) => {
+      if (component.id === innermostComponentId) return; // Skip the innermost component
+      
+      const hoverOverlay = this.uiManager.getHoverOverlayElement(component.id);
+      if (!hoverOverlay || !hoverOverlay.classList.contains('hovered')) return;
+
+      // Check if this component contains the innermost hovered component
+      const containsInnermost = innermostComponentId && 
+        directlyHoveredComponent && 
+        component.contains(directlyHoveredComponent);
+
+      if (containsInnermost) {
+        // Convert to secondary hover (parent of the hovered child)
+        setTimeout(() => {
+          hoverOverlay.classList.remove('outlined');
+          hoverOverlay.classList.add('hovered-secondary');
+        }, 0);
+      } else {
+        // Remove hover from unrelated components
+        setTimeout(() => {
+          this.uiManager.removeComponentHover(component, this.page!, true);
+        }, 0);
+      }
+    });
+
+    // Remove hover from non-secondary type components (excluding the target)
+    const allHoveredComponents = document.querySelectorAll<HTMLElement>(
+      `[comptype]:not([id="${componentId}"])` +
+      secondaryHoveredComponentTypes.map(type => `:not([comptype="${type}"])`).join('')
+    );
+
+    allHoveredComponents.forEach((component: HTMLElement) => {
+      const hoverOverlay = this.uiManager.getHoverOverlayElement(component.id);
+      if (hoverOverlay && hoverOverlay.classList.contains('hovered')) {
+        this.uiManager.removeComponentHover(component, this.page!, true);
+      }
+    });
+
+    // Handle editor components
+    const allHoveredEditorComponents = document.querySelectorAll<HTMLElement>(`[editor-id].hovered:not([editor-id="${componentId}"])`);
+    allHoveredEditorComponents.forEach((el: HTMLElement) => {
+      this.uiManager.removeComponentHover(el, this.page!, false);
+    });
+
+    const allHoveredEditorSections = document.querySelectorAll<HTMLElement>('.section-content.hovered');
+    allHoveredEditorSections.forEach((el: HTMLElement) => {
+      const dragHandleElem = el.children[1];
+      if (dragHandleElem && dragHandleElem.getAttribute('editor-id') === componentId) return;
+
+      this.uiManager.removeComponentHover(el, this.page!, false);
+    });
   }
 
   private onKeyDown(e: KeyboardEvent): void {
