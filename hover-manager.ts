@@ -40,13 +40,23 @@ export class HoverManager {
     const addSecondaryHover = PageComponentNames.detail == componentType && 
                              !(componentType == PageComponentNames.detail && containerType == PageGridComponentNames.detail);
 
+    // DEBUG: Log what's happening
+    console.log(`[HoverManager] Setting up component ${componentId}, previewMode: ${previewMode}, isPreviewHover: ${isPreviewHover}`);
+    
     // CRITICAL: Match original order exactly - condition check FIRST creates the observable
-    if (previewMode == PreviewModes.editor && this.hoverStateManager.getHoverObservable(componentId)) {
+    const hasObservable = this.hoverStateManager.getHoverObservable(componentId);
+    const shouldSetupEvents = previewMode == PreviewModes.editor && hasObservable;
+    
+    console.log(`[HoverManager] hasObservable: ${!!hasObservable}, shouldSetupEvents: ${shouldSetupEvents}`);
+    
+    if (shouldSetupEvents) {
+      console.log(`[HoverManager] Setting up mouse events for ${componentId}`);
       this.hoverEventHandler.setupMouseEvents(fragment, componentId, isPreviewHover);
     }
 
     // Then set up subscription using the already-created observable
     return this.hoverStateManager.getHoverObservable(componentId).subscribe(result => {
+      console.log(`[HoverManager] Hover state change for ${componentId}: isHovered=${result.isHovered}`);
       if (result.isHovered) {
         this.onHover(fragment, isPreviewHover, componentId, result.event, addSecondaryHover);
       } else {
@@ -92,16 +102,21 @@ export class HoverManager {
   // ================================
 
   private onHover(fragment: HTMLElement, isPreviewHover: boolean, componentId: string, event?: MouseEvent, addSecondaryHover?: boolean) {
+    console.log(`[HoverManager] onHover called for ${componentId}, isPreviewHover=${isPreviewHover}, addSecondaryHover=${addSecondaryHover}`);
+    
     const shiftDown = event?.shiftKey;
 
     const element = fragment as HTMLElement;
     if (isPreviewHover) {
       if (shiftDown && !document.querySelector('#editorButtonContainer:hover')) {
+        console.log(`[HoverManager] Hovering direct parent for ${componentId}`);
         this.hoverUIManager.hoverDirectParent(element, isPreviewHover);
       } else {
+        console.log(`[HoverManager] Hovering preview component ${componentId}`);
         this.hoverUIManager.hoverPreviewComponent(element, true, addSecondaryHover && !!event);
       }
     } else {
+      console.log(`[HoverManager] Hovering editor component ${componentId}`);
       this.hoverUIManager.hoverEditorComponent(element);
     }
 
