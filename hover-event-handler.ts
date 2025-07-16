@@ -83,14 +83,14 @@ export class HoverEventHandler implements OnDestroy {
     this.stateManager.setHoverState(componentId, false, event);
 
     // Handle hover transition from inner to outer components
-    const directlyHoveredComponent = this.coordinator.findDirectlyHoveredComponent();
-    
-    this.coordinator.removeAllHoveredComponentsExcept(componentId, this.page!);
+    setTimeout(() => {
+      const directlyHoveredComponent = this.coordinator.findDirectlyHoveredComponent();
 
-    if (directlyHoveredComponent) {
-      const componentPair = this.coordinator.findComponentPair(directlyHoveredComponent);
-      this.coordinator.synchronizeHover(componentPair, this.page!);
-    }
+      if (directlyHoveredComponent) {
+        const componentPair = this.coordinator.findComponentPair(directlyHoveredComponent);
+        this.coordinator.synchronizeHover(componentPair, this.page!);
+      }
+    }, 0);
   }
 
   private handleComponentHover(
@@ -107,6 +107,7 @@ export class HoverEventHandler implements OnDestroy {
       if (shiftDown && !document.querySelector('#editorButtonContainer:hover')) {
         this.coordinator.hoverDirectParent(fragment, this.page!, isPreviewHover);
       } else {
+        // Apply hover directly to this component
         this.uiManager.addPreviewComponentHover(fragment, this.page!, {
           addOutline: true,
           addSecondaryHover: shouldAddSecondaryHover && !!hoverState.event
@@ -116,8 +117,12 @@ export class HoverEventHandler implements OnDestroy {
       this.uiManager.addEditorComponentHover(fragment);
     }
 
-    this.handleNonTargetElements(hoverState.event!, hoverState.componentId);
     this.uiManager.updateEditorButtonZIndex(fragment, '1022', isPreviewHover);
+
+    // Handle non-target elements AFTER applying hover (only for mouse events, not programmatic)
+    if (hoverState.event && hoverState.event.type === 'mouseenter') {
+      this.handleNonTargetElements(hoverState.event, hoverState.componentId);
+    }
   }
 
   private handleComponentUnhover(fragment: HTMLElement, isPreviewHover: boolean): void {
@@ -131,23 +136,30 @@ export class HoverEventHandler implements OnDestroy {
 
     const isSecondaryHoveredComponentType = this.SECONDARY_HOVER_COMPONENT_TYPES.includes(targetCompType);
 
+    // Remove 'hovered-secondary' from the current target if it's a secondary hover type
     if (targetCompType && isSecondaryHoveredComponentType) {
-      this.uiManager.removeSpecificHoverClass(element.id, 'hovered-secondary');
+      setTimeout(() => {
+        this.uiManager.removeSpecificHoverClass(element.id, 'hovered-secondary');
+      }, 0);
     }
 
-    // Handle secondary hover for specific component types
-    this.uiManager.removeSecondaryHoverFromComponents([
-      PageComponentNames.row,
-      PageComponentNames.detail,
-      PageComponentNames.column,
-      PageComponentNames.card,
-      PageComponentNames.section,
-      PageComponentNames.filterBar,
-      PageComponentNames.button
-    ], componentId);
+    // Convert secondary hover components to 'hovered-secondary' state
+    setTimeout(() => {
+      this.uiManager.removeSecondaryHoverFromComponents([
+        PageComponentNames.row,
+        PageComponentNames.detail,
+        PageComponentNames.column,
+        PageComponentNames.card,
+        PageComponentNames.section,
+        PageComponentNames.filterBar,
+        PageComponentNames.button
+      ], componentId);
+    }, 0);
 
-    // Remove hover from all other components
-    this.uiManager.removeAllHoveredComponents(componentId, this.SECONDARY_HOVER_COMPONENT_TYPES);
+    // Remove hover from all other components (excluding secondary hover types)
+    setTimeout(() => {
+      this.uiManager.removeAllHoveredComponents(componentId, this.SECONDARY_HOVER_COMPONENT_TYPES);
+    }, 0);
   }
 
   private onKeyDown(e: KeyboardEvent): void {

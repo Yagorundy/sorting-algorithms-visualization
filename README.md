@@ -89,6 +89,7 @@ HoverManager (Facade)
 - `PERFORMANCE_GUIDE.md` - Performance optimization guide
 - `MANUAL_HOVER_GUIDE.md` - Manual hover triggering guide
 - `USAGE_PATTERNS.md` - Quick reference for different usage patterns
+- `HOVER_DEBUG_GUIDE.md` - Troubleshooting guide for hover issues
 
 ## Performance Benefits
 

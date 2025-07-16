@@ -27,26 +27,27 @@ export class HoverUIManager {
       return;
     }
 
+    // Handle hover overlay first (most important for visual feedback)
     const hoverOverlayEl = this.getHoverOverlayElement(componentElement.id);
-    if (!hoverOverlayEl) return;
+    if (hoverOverlayEl) {
+      // Clear any existing hover classes first
+      hoverOverlayEl.classList.remove('hovered', 'outlined', 'hovered-secondary');
+      
+      const classList: string[] = ['hovered'];
 
-    const classList: string[] = ['hovered'];
+      if (options.addOutline && !componentElement.classList.contains("selected")) {
+        classList.push('outlined');
+      }
 
-    if (options.addOutline && !componentElement.classList.contains("selected")) {
-      classList.push('outlined');
+      if (options.addSecondaryHover) {
+        classList.push('hovered-secondary');
+      }
+
+      hoverOverlayEl.classList.add(...classList);
     }
 
-    if (options.addSecondaryHover) {
-      classList.push('hovered-secondary');
-    } else {
-      hoverOverlayEl.classList.remove('hovered-secondary');
-    }
-
-    hoverOverlayEl.classList.add(...classList);
-
+    // Update background image and related elements
     this.updateBackgroundImageForHover(componentElement, page);
-    
-    // Handle related element visibility
     this.toggleRelatedElements(componentElement, true, options.addSecondaryHover);
   }
 
@@ -62,15 +63,19 @@ export class HoverUIManager {
   }
 
   public removeComponentHover(componentElement: HTMLElement, page: Page, isPreviewComponent: boolean): void {
-    if (!componentElement || !page?.components) return;
+    if (!componentElement) return;
 
-    if (isPreviewComponent) {
+    if (isPreviewComponent && page?.components) {
       this.restoreOriginalBackgroundImage(componentElement, page);
-      const hoverOverlay = this.getHoverOverlayElement(componentElement.id);
-      hoverOverlay?.classList.remove('hovered', 'outlined', 'hovered-secondary');
       
       // Hide related elements
       this.toggleRelatedElements(componentElement, false);
+      
+      // Remove hover overlay classes
+      const hoverOverlay = this.getHoverOverlayElement(componentElement.id);
+      if (hoverOverlay) {
+        hoverOverlay.classList.remove('hovered', 'outlined', 'hovered-secondary');
+      }
     } else {
       componentElement.classList.remove('hovered');
     }
