@@ -23,31 +23,42 @@ export class HoverUIManager {
       addSecondaryHover?: boolean;
     } = {}
   ): void {
-    if (!componentElement || !this.canHoverComponent(componentElement)) {
-      return;
-    }
+    // Match original HoverService.hoverPreviewComponent exactly
+    if (!componentElement) return;
 
-    // Handle hover overlay first (most important for visual feedback)
+    // Do no display "layout" hover icon buttons when detail dialog is opened (detailsLayout)
+    const detailDialog = document.querySelector(".detail-dialog");
+    if (detailDialog && !detailDialog.contains(componentElement)) return;
+
+    // Prevent hover effects if the component is inside a carousel slide which isn't active, and
+    // if the carousel has a class of "disable-hover-on-inactive-slides".
+    if (isDisabledCarouselSlide(componentElement)) return;
+
     const hoverOverlayEl = this.getHoverOverlayElement(componentElement.id);
-    if (hoverOverlayEl) {
-      // Clear any existing hover classes first
-      hoverOverlayEl.classList.remove('hovered', 'outlined', 'hovered-secondary');
-      
-      const classList: string[] = ['hovered'];
 
-      if (options.addOutline && !componentElement.classList.contains("selected")) {
-        classList.push('outlined');
-      }
+    const classList: string[] = ['hovered'];
 
-      if (options.addSecondaryHover) {
-        classList.push('hovered-secondary');
-      }
-
-      hoverOverlayEl.classList.add(...classList);
+    if (options.addOutline && !componentElement.classList.contains("selected")) {
+      classList.push('outlined');
     }
 
-    // Update background image and related elements
-    this.updateBackgroundImageForHover(componentElement, page);
+    if (options.addSecondaryHover) {
+      classList.push('hovered-secondary');
+    } else {
+      hoverOverlayEl?.classList.remove('hovered-secondary');
+    }
+
+    hoverOverlayEl?.classList.add(...classList);
+
+    // Handle background image (original logic)
+    const component = page.components.data[componentElement.id];
+
+    if (component?.styles.states?.hover.backgroundImageOptimizations)
+      componentElement.style.backgroundImage = `url(${this.mediaService.getBackground(component.styles.states.hover.backgroundImageOptimizations).backgroundSrc})`;
+    else if (component?.styles.backgroundImageOptimizations && component?.styles.states?.hover.removedBackgroundImageForState)
+      componentElement.style.backgroundImage = '';
+
+    // Handle related elements
     this.toggleRelatedElements(componentElement, true, options.addSecondaryHover);
   }
 
@@ -63,19 +74,26 @@ export class HoverUIManager {
   }
 
   public removeComponentHover(componentElement: HTMLElement, page: Page, isPreviewComponent: boolean): void {
-    if (!componentElement) return;
+    // Match original HoverService.removeHoverRelatedAttributesFromElement
+    if (!page || !page.components) return;
 
-    if (isPreviewComponent && page?.components) {
-      this.restoreOriginalBackgroundImage(componentElement, page);
+    if (isPreviewComponent) {
+      // Restore original background image
+      if (page.components.data[componentElement.id]?.styles.backgroundImageOptimizations) {
+        componentElement.style.backgroundImage = `url(${this.mediaService.getBackground(
+          page.components.data[componentElement.id]?.styles.backgroundImageOptimizations, 
+          page.components.data[componentElement.id]?.styles.backgroundImageSize
+        ).backgroundSrc})`;
+      } else {
+        componentElement.style.backgroundImage = '';
+      }
+
+      // Remove hover overlay classes
+      const hoverOverlay = this.getHoverOverlayElement(componentElement.id);
+      hoverOverlay?.classList.remove('hovered', 'outlined', 'hovered-secondary');
       
       // Hide related elements
       this.toggleRelatedElements(componentElement, false);
-      
-      // Remove hover overlay classes
-      const hoverOverlay = this.getHoverOverlayElement(componentElement.id);
-      if (hoverOverlay) {
-        hoverOverlay.classList.remove('hovered', 'outlined', 'hovered-secondary');
-      }
     } else {
       componentElement.classList.remove('hovered');
     }
@@ -228,46 +246,7 @@ export class HoverUIManager {
     // This allows other parts of the application to register custom element behaviors
   }
 
-  private canHoverComponent(componentElement: HTMLElement): boolean {
-    // Do not display hover when detail dialog is opened
-    const detailDialog = document.querySelector(".detail-dialog");
-    if (detailDialog && !detailDialog.contains(componentElement)) {
-      return false;
-    }
 
-    // Prevent hover effects if component is in disabled carousel slide
-    if (isDisabledCarouselSlide(componentElement)) {
-      return false;
-    }
 
-    return true;
-  }
 
-  private updateBackgroundImageForHover(componentElement: HTMLElement, page: Page): void {
-    const component = page.components.data[componentElement.id];
-    
-    if (component?.styles.states?.hover.backgroundImageOptimizations) {
-      const backgroundSrc = this.mediaService.getBackground(
-        component.styles.states.hover.backgroundImageOptimizations
-      ).backgroundSrc;
-      componentElement.style.backgroundImage = `url(${backgroundSrc})`;
-    } else if (component?.styles.backgroundImageOptimizations && 
-               component?.styles.states?.hover.removedBackgroundImageForState) {
-      componentElement.style.backgroundImage = '';
-    }
-  }
-
-  private restoreOriginalBackgroundImage(componentElement: HTMLElement, page: Page): void {
-    const component = page.components.data[componentElement.id];
-    
-    if (component?.styles.backgroundImageOptimizations) {
-      const backgroundSrc = this.mediaService.getBackground(
-        component.styles.backgroundImageOptimizations,
-        component.styles.backgroundImageSize
-      ).backgroundSrc;
-      componentElement.style.backgroundImage = `url(${backgroundSrc})`;
-    } else {
-      componentElement.style.backgroundImage = '';
-    }
-  }
 }

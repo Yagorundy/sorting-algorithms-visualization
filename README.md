@@ -90,6 +90,7 @@ HoverManager (Facade)
 - `MANUAL_HOVER_GUIDE.md` - Manual hover triggering guide
 - `USAGE_PATTERNS.md` - Quick reference for different usage patterns
 - `HOVER_DEBUG_GUIDE.md` - Troubleshooting guide for hover issues
+- `hover-debug-test.ts` - Debug tools for testing hover functionality
 
 ## Performance Benefits
 
@@ -153,6 +154,28 @@ public toggleRelatedElements(componentElement: HTMLElement, isHovered: boolean, 
   this.toggleMyCustomElements(componentElement, isHovered, isSecondaryHover); // Add this
 }
 ```
+
+## Troubleshooting
+
+If hover isn't working on inner components:
+
+1. **Quick Test**: Run this in browser console:
+   ```javascript
+   debugHoverSystem(); // Check if components are found
+   showAllHoverOverlays(); // Visually highlight all hover areas
+   ```
+
+2. **Check Setup**: Verify your component is calling:
+   ```typescript
+   this.hoverSubscription = this.hoverManager.setupComponentHover(...);
+   ```
+
+3. **Check DOM Structure**: Ensure these elements exist:
+   - `<div id="your-component-id" comptype="...">` (main component)
+   - `<div id="hover-overlay_your-component-id" class="hover-overlay">` (hover overlay)
+   - `<div id="component-label_your-component-id">` (for floating labels)
+
+4. **See Debug Guide**: Check `HOVER_DEBUG_GUIDE.md` for detailed troubleshooting
 
 ## Usage Patterns
 
