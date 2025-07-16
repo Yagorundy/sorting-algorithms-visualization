@@ -104,10 +104,28 @@ Replace expensive CSS selectors with direct DOM manipulation:
 ```
 
 ```typescript
-// New (no reflow, ~20x faster with direct ID lookup)
+// New (no reflow, ~20x faster with direct ID lookup + CSS classes)
 // Automatic via HoverUIManager.toggleFloatingLabels()
 const floatingLabel = document.getElementById(`component-label_${componentId}`);
-floatingLabel.style.visibility = shouldShow ? 'visible' : 'hidden';
+if (shouldShow) {
+  floatingLabel.classList.add('visible');
+} else {
+  floatingLabel.classList.remove('visible');
+}
+```
+
+**Required CSS:**
+```css
+#component-label_* {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+#component-label_*.visible {
+  visibility: visible;
+  opacity: 1;
+}
 ```
 
 ## Manual Hover Triggering

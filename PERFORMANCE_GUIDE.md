@@ -34,7 +34,7 @@ The new hover system replaces expensive CSS selectors with direct DOM manipulati
 
 ### After (JavaScript-based, no reflow)
 ```typescript
-// Direct DOM manipulation in HoverUIManager - uses ID lookup for maximum performance
+// Direct DOM manipulation in HoverUIManager - uses ID lookup + CSS classes for maximum performance
 public toggleFloatingLabels(
   componentElement: HTMLElement, 
   isHovered: boolean, 
@@ -47,8 +47,11 @@ public toggleFloatingLabels(
   const floatingLabel = document.getElementById(`component-label_${componentId}`);
   
   if (floatingLabel) {
-    floatingLabel.style.visibility = shouldShow ? 'visible' : 'hidden';
-    floatingLabel.style.opacity = shouldShow ? '1' : '0';
+    if (shouldShow) {
+      floatingLabel.classList.add('visible');
+    } else {
+      floatingLabel.classList.remove('visible');
+    }
   }
 }
 ```
@@ -153,13 +156,17 @@ public toggleRelatedElements(componentElement: HTMLElement, isHovered: boolean, 
 .parent.child-active .sibling { }
 ```
 
-### 2. **Use Direct Style Manipulation**
+### 2. **Use CSS Classes Over Direct Style Manipulation**
 ```typescript
-// Preferred approach
+// Best approach - CSS classes with transitions
+element.classList.add('visible');
+element.classList.remove('visible');
+
+// Good but less flexible
 element.style.visibility = 'visible';
 element.style.opacity = '1';
 
-// Avoid if possible
+// Avoid - complex CSS selectors
 element.classList.add('complex-hover-state');
 ```
 
