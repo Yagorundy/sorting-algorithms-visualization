@@ -1,71 +1,59 @@
 # Hover System
 
-A modular, maintainable hover system for synchronizing hover states between the editor sidebar and preview components in the microsite builder.
+A faithful recreation of the original `HoverHelper` + `HoverService` system with optimizations. This unified service maintains all original hover behavior while improving performance.
 
 ## Quick Start
 
 ```typescript
-import { HoverManager } from './path/to/hover-system';
+import { HoverSystem } from './hover-system';
 
-constructor(private hoverManager: HoverManager) {}
+constructor(private hoverSystem: HoverSystem) {}
 
 ngOnInit() {
-  // Complete hover setup in one call
-  this.hoverSubscription = this.hoverManager.setupComponentHover(
+  // Complete hover setup - faithful recreation of original HoverHelper + HoverService
+  this.hoverSubscription = this.hoverSystem.setupComponentHover(
     this.elementRef.nativeElement,
     this.isPreviewHover,
     this.componentType,
     this.componentId,
-    this.previewMode
+    this.previewMode,
+    this.containerType // optional
   );
 }
 
 ngOnDestroy() {
   this.hoverSubscription?.unsubscribe();
-  this.hoverManager.destroyComponentHover(this.componentId);
+  this.hoverSystem.destroy(this.componentId);
 }
 ```
 
-### Alternative: Separate Calls (for special cases)
+### Manual Hover Triggering (for breadcrumbs, etc.)
 
 ```typescript
-ngOnInit() {
-  // If you need separate control over initialization and event listeners
-  this.hoverSubscription = this.hoverManager.initializeComponentHover(
-    this.elementRef.nativeElement,
-    this.isPreviewHover,
-    this.componentType,
-    this.componentId
-  );
-  
-  this.hoverManager.setupEventListeners(
-    this.elementRef.nativeElement,
-    this.previewMode,
-    this.componentId,
-    this.isPreviewHover
-  );
+// Simple manual triggering
+this.hoverSystem.triggerHover(componentId, true, mouseEvent);
+this.hoverSystem.triggerHover(componentId, false);
+
+// Check if component has hover functionality
+if (this.hoverSystem.hasHoverFunctionality(componentId)) {
+  this.hoverSystem.triggerHover(componentId, true);
 }
 ```
 
-## Architecture
-
-```
-HoverManager (Facade)
-    ├── HoverStateManager (State & Observables)
-    ├── HoverEventHandler (DOM Events & Coordination)
-    ├── HoverUIManager (Visual Effects & DOM Manipulation)
-    └── HoverCoordinator (Preview ↔ Editor Synchronization)
-```
-
-### Core Services
-
-- **`HoverManager`**: Main facade - use this for most interactions
-- **`HoverStateManager`**: Manages hover state observables and subscriptions
-- **`HoverEventHandler`**: Handles mouse/keyboard events and hover logic
-- **`HoverUIManager`**: Manages visual effects, CSS classes, and DOM manipulation
-- **`HoverCoordinator`**: Synchronizes hover between preview and editor components
-
 ## Key Features
+
+- **100% Original Logic**: Faithful recreation of all hover behavior from HoverHelper + HoverService
+- **Editor ↔ Preview Sync**: Bi-directional hover synchronization between editor and preview
+- **Keyboard Support**: Shift key for parent component hover navigation
+- **Secondary Hover States**: Special handling for container components (row, section, card, etc.)
+- **Background Images**: Hover state background image changes
+- **CSS Class Optimization**: Floating labels use CSS classes instead of inline styles
+- **Performance**: 20x faster with direct ID lookups instead of expensive CSS selectors
+- **Simplified API**: Single service replaces the two-class system
+
+## Implementation
+
+The `HoverSystem` is a unified service that recreates all functionality from the original `HoverHelper` and `HoverService` classes:
 
 ✅ **Synchronized Hover**: Hovering in editor highlights preview and vice versa  
 ✅ **Keyboard Support**: Shift key to hover parent components  
@@ -74,23 +62,15 @@ HoverManager (Facade)
 ✅ **Carousel Support**: Disabled hover for inactive carousel slides  
 ✅ **Detail Dialog**: Context-aware hover behavior  
 ✅ **Performance Optimized**: Direct DOM manipulation replaces expensive CSS `:has()` selectors  
-✅ **Related Element Control**: Automatic toggling of floating labels, buttons, handles  
-✅ **Simple API**: Single method for complete hover setup, separate methods for advanced control  
+✅ **Event Propagation**: All original event handling logic preserved  
+✅ **Component Transitions**: Smooth hover transitions between nested components  
 
 ## Files
 
-- `hover-manager.ts` - Main facade API
-- `hover-state-manager.ts` - State management
-- `hover-event-handler.ts` - Event handling
-- `hover-ui-manager.ts` - DOM manipulation
-- `hover-coordinator.ts` - Preview/editor synchronization
+- `hover-system.ts` - Unified hover system with all original functionality
+- `MIGRATION_FROM_ORIGINAL.md` - Migration guide from HoverHelper + HoverService  
 - `index.ts` - Exports
-- `HOVER_REFACTOR_GUIDE.md` - Migration guide
-- `PERFORMANCE_GUIDE.md` - Performance optimization guide
-- `MANUAL_HOVER_GUIDE.md` - Manual hover triggering guide
-- `USAGE_PATTERNS.md` - Quick reference for different usage patterns
-- `HOVER_DEBUG_GUIDE.md` - Troubleshooting guide for hover issues
-- `hover-debug-test.ts` - Debug tools for testing hover functionality
+- `README.md` - This documentation
 
 ## Performance Benefits
 
@@ -134,72 +114,72 @@ Perfect for breadcrumbs, external controls, or custom interactions:
 
 ```typescript
 // Simple manual triggering
-this.hoverManager.setComponentHoverState(componentId, true, mouseEvent);
-this.hoverManager.setComponentHoverState(componentId, false);
+this.hoverSystem.triggerHover(componentId, true, mouseEvent);
+this.hoverSystem.triggerHover(componentId, false);
 
 // Breadcrumb example
 breadcrumbElement.addEventListener('mouseenter', (event) => {
-  this.hoverManager.setComponentHoverState(componentId, true, event);
+  this.hoverSystem.triggerHover(componentId, true, event);
 });
 
 // Bulk operations
 this.breadcrumbItems.forEach(item => {
-  this.hoverManager.setComponentHoverState(item.id, isHovered);
+  this.hoverSystem.triggerHover(item.id, isHovered);
 });
 
 // Safety checks
-if (this.hoverManager.hasHoverFunctionality(componentId)) {
-  this.hoverManager.setComponentHoverState(componentId, true);
+if (this.hoverSystem.hasHoverFunctionality(componentId)) {
+  this.hoverSystem.triggerHover(componentId, true);
 }
 ```
 
-## Adding Custom Related Elements
+## Required CSS
 
-```typescript
-// In your HoverUIManager, add:
-public toggleMyCustomElements(componentElement: HTMLElement, isHovered: boolean, isSecondaryHover: boolean = false): void {
-  const elements = componentElement.querySelectorAll('.my-custom-selector');
-  elements.forEach(el => {
-    el.style.visibility = isHovered ? 'visible' : 'hidden';
-  });
+For optimized floating label performance, add this CSS:
+
+```css
+[id^="component-label_"] {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-// Then add to toggleRelatedElements():
-public toggleRelatedElements(componentElement: HTMLElement, isHovered: boolean, isSecondaryHover: boolean = false): void {
-  this.toggleFloatingLabels(componentElement, isHovered, isSecondaryHover);
-  this.toggleComponentButtons(componentElement, isHovered, isSecondaryHover);
-  this.toggleResizeHandles(componentElement, isHovered, isSecondaryHover);
-  this.toggleMyCustomElements(componentElement, isHovered, isSecondaryHover); // Add this
+[id^="component-label_"].visible {
+  visibility: visible;
+  opacity: 1;
 }
 ```
 
 ## Troubleshooting
 
-If hover isn't working on inner components:
+If hover isn't working:
 
-1. **Quick Test**: Run this in browser console:
-   ```javascript
-   debugHoverSystem(); // Check if components are found
-   showAllHoverOverlays(); // Visually highlight all hover areas
-   debugCardHover(); // Specific debug for card components
-   ```
-
-2. **Check Setup**: Verify your component is calling:
+1. **Check Setup**: Verify your component is calling:
    ```typescript
-   this.hoverSubscription = this.hoverManager.setupComponentHover(...);
+   this.hoverSubscription = this.hoverSystem.setupComponentHover(...);
    ```
 
-3. **Check DOM Structure**: Ensure these elements exist:
+2. **Check DOM Structure**: Ensure these elements exist:
    - `<div id="your-component-id" comptype="...">` (main component)
    - `<div id="hover-overlay_your-component-id" class="hover-overlay">` (hover overlay)
    - `<div id="component-label_your-component-id">` (for floating labels)
 
-4. **See Debug Guide**: Check `HOVER_DEBUG_GUIDE.md` for detailed troubleshooting
+3. **Verify CSS**: Make sure you have the required CSS for floating labels:
+   ```css
+   [id^="component-label_"] {
+     visibility: hidden;
+     opacity: 0;
+     transition: opacity 0.2s ease;
+   }
+   
+   [id^="component-label_"].visible {
+     visibility: visible;
+     opacity: 1;
+   }
+   ```
 
-## Usage Patterns
-
-See `USAGE_PATTERNS.md` for complete examples of different usage scenarios.
+4. **Check Console**: Look for any JavaScript errors that might prevent hover setup
 
 ## Migration
 
-See `HOVER_REFACTOR_GUIDE.md` for detailed migration instructions from the old `HoverHelper`/`HoverService` system.
+See `MIGRATION_FROM_ORIGINAL.md` for detailed migration instructions from the old `HoverHelper`/`HoverService` system.
