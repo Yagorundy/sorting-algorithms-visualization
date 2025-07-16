@@ -45,6 +45,9 @@ export class HoverUIManager {
     hoverOverlayEl.classList.add(...classList);
 
     this.updateBackgroundImageForHover(componentElement, page);
+    
+    // Handle related element visibility
+    this.toggleRelatedElements(componentElement, true, options.addSecondaryHover);
   }
 
   public addEditorComponentHover(editorElement: HTMLElement | null): void {
@@ -65,6 +68,9 @@ export class HoverUIManager {
       this.restoreOriginalBackgroundImage(componentElement, page);
       const hoverOverlay = this.getHoverOverlayElement(componentElement.id);
       hoverOverlay?.classList.remove('hovered', 'outlined', 'hovered-secondary');
+      
+      // Hide related elements
+      this.toggleRelatedElements(componentElement, false);
     } else {
       componentElement.classList.remove('hovered');
     }
@@ -94,6 +100,9 @@ export class HoverUIManager {
         const hoverOverlayEl = this.getHoverOverlayElement(element.id);
         hoverOverlayEl?.classList.remove('outlined');
         hoverOverlayEl?.classList.add('hovered-secondary');
+        
+        // Update related elements for secondary hover
+        this.toggleRelatedElements(element, true, true);
       }, 0);
     });
   }
@@ -117,6 +126,9 @@ export class HoverUIManager {
       if (isPreview) {
         const hoverOverlay = this.getHoverOverlayElement(el.id);
         hoverOverlay?.classList.remove('hovered', 'outlined', 'hovered-secondary');
+        
+        // Hide related elements when removing hover
+        this.toggleRelatedElements(el, false);
       } else {
         el.classList.remove('hovered');
       }
@@ -127,6 +139,86 @@ export class HoverUIManager {
     setTimeout(() => {
       this.getHoverOverlayElement(componentId)?.classList.remove(className);
     }, 0);
+  }
+
+  /**
+   * Toggle visibility of related elements like floating labels
+   * Replaces expensive CSS selectors like :has() with direct DOM manipulation
+   */
+  public toggleRelatedElements(
+    componentElement: HTMLElement, 
+    isHovered: boolean, 
+    isSecondaryHover: boolean = false
+  ): void {
+    // Handle floating labels
+    this.toggleFloatingLabels(componentElement, isHovered, isSecondaryHover);
+    
+    // Handle other related elements
+    this.toggleComponentButtons(componentElement, isHovered, isSecondaryHover);
+    this.toggleResizeHandles(componentElement, isHovered, isSecondaryHover);
+    
+    // Add more related element handlers as needed
+  }
+
+  /**
+   * Toggle floating label visibility
+   * Replaces: [comptype]:has(> .hover-overlay.hovered:not(.hovered-secondary)):not(.selected)>component-label div.floating-label
+   */
+  public toggleFloatingLabels(
+    componentElement: HTMLElement, 
+    isHovered: boolean, 
+    isSecondaryHover: boolean = false
+  ): void {
+    // Only show floating labels for primary hover (not secondary) and when not selected
+    const shouldShow = isHovered && !isSecondaryHover && !componentElement.classList.contains('selected');
+    
+    const floatingLabels = componentElement.querySelectorAll<HTMLElement>('component-label div.floating-label');
+    
+    floatingLabels.forEach(label => {
+      label.style.visibility = shouldShow ? 'visible' : 'hidden';
+      label.style.opacity = shouldShow ? '1' : '0';
+    });
+  }
+
+  /**
+   * Toggle component action buttons visibility
+   */
+  public toggleComponentButtons(
+    componentElement: HTMLElement, 
+    isHovered: boolean, 
+    isSecondaryHover: boolean = false
+  ): void {
+    const buttons = componentElement.querySelectorAll<HTMLElement>('.component-action-buttons');
+    
+    buttons.forEach(button => {
+      button.style.visibility = isHovered && !isSecondaryHover ? 'visible' : 'hidden';
+    });
+  }
+
+  /**
+   * Toggle resize handles visibility
+   */
+  public toggleResizeHandles(
+    componentElement: HTMLElement, 
+    isHovered: boolean, 
+    isSecondaryHover: boolean = false
+  ): void {
+    const handles = componentElement.querySelectorAll<HTMLElement>('.resize-handle');
+    
+    handles.forEach(handle => {
+      handle.style.visibility = isHovered && !isSecondaryHover ? 'visible' : 'hidden';
+    });
+  }
+
+  /**
+   * Add custom element toggles for specific use cases
+   */
+  public addCustomElementToggle(
+    selector: string,
+    toggleFunction: (element: HTMLElement, isHovered: boolean, isSecondaryHover: boolean) => void
+  ): void {
+    // Store custom toggles in a map if needed for dynamic behavior
+    // This allows other parts of the application to register custom element behaviors
   }
 
   private canHoverComponent(componentElement: HTMLElement): boolean {
