@@ -138,12 +138,18 @@ export class HoverUIManager implements OnDestroy {
     const componentId = componentElement.id;
     const floatingLabel = document.getElementById(`component-label_${componentId}`);
     
+    console.log(`[FloatingLabel] ${componentId}: isHovered=${isHovered}, isSecondaryHover=${isSecondaryHover}, isSelected=${isSelected}, shouldShow=${shouldShow}`);
+    
     if (floatingLabel) {
       if (shouldShow) {
+        console.log(`[FloatingLabel] Showing label for ${componentId}`);
         floatingLabel.classList.add('visible');
       } else {
+        console.log(`[FloatingLabel] Hiding label for ${componentId}`);
         floatingLabel.classList.remove('visible');
       }
+    } else {
+      console.log(`[FloatingLabel] No floating label found for ${componentId}`);
     }
   }
 

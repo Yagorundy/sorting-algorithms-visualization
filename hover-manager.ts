@@ -92,16 +92,21 @@ export class HoverManager {
   // ================================
 
   private onHover(fragment: HTMLElement, isPreviewHover: boolean, componentId: string, event?: MouseEvent, addSecondaryHover?: boolean) {
+    console.log(`[HoverManager] onHover ${componentId}, isPreviewHover=${isPreviewHover}, addSecondaryHover=${addSecondaryHover}`);
+    
     const shiftDown = event?.shiftKey;
 
     const element = fragment as HTMLElement;
     if (isPreviewHover) {
       if (shiftDown && !document.querySelector('#editorButtonContainer:hover')) {
+        console.log(`[HoverManager] Hovering direct parent for ${componentId}`);
         this.hoverUIManager.hoverDirectParent(element, isPreviewHover);
       } else {
+        console.log(`[HoverManager] Hovering preview component ${componentId}`);
         this.hoverUIManager.hoverPreviewComponent(element, true, addSecondaryHover && !!event);
       }
     } else {
+      console.log(`[HoverManager] Hovering editor component ${componentId}`);
       this.hoverUIManager.hoverEditorComponent(element);
     }
 
@@ -112,6 +117,7 @@ export class HoverManager {
   }
 
   private onUnHover(fragment: HTMLElement, isPreviewHover: boolean) {
+    console.log(`[HoverManager] onUnHover ${fragment.id}, isPreviewHover=${isPreviewHover}`);
     this.hoverUIManager.removeHoverRelatedAttributesFromElement(fragment as HTMLElement, true);
     this.hoverUIManager.changeIndexOfHoverButton('0', fragment, isPreviewHover);
   }
