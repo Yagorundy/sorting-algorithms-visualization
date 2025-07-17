@@ -30,7 +30,6 @@ export class HoverStateManager implements OnDestroy {
   }
 
   public setHoverState(componentId: string, isHovered: boolean, event?: MouseEvent) {
-    console.log(`[HoverState] Setting ${componentId} to isHovered=${isHovered}`);
     const subject = this.getOrCreateSubject(componentId);
     subject.next({ isHovered, event });
   }
