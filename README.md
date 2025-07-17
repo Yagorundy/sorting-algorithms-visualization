@@ -49,7 +49,7 @@ if (this.smartHoverManager.hasHoverFunctionality(componentId)) {
 - **🚀 Event Propagation Prevention**: `event.stopPropagation()` eliminates parent/child hover conflicts
 - **🎯 Single Source of Truth**: Global hover manager tracks ALL state - no more conflicts
 - **⚡ Smart Hierarchy**: Automatic parent hover when leaving child components
-- **🔄 Editor ↔ Preview Sync**: Intelligent synchronization during component transitions
+- **🔄 Enhanced Editor ↔ Preview Sync**: Instant bidirectional synchronization - hover editor components to highlight preview and vice versa
 - **⌨️ Keyboard Support**: Shift key for parent component hover navigation
 - **🎨 Secondary Hover States**: Special handling for container components (row, section, card, etc.)
 - **🖼️ Background Images**: Hover state background image changes
@@ -102,6 +102,7 @@ The modular system faithfully recreates all functionality from the original `Hov
 - `hover-ui-manager.ts` - DOM manipulation and visual effects (modular system)
 - `hover-coordinator.ts` - Preview/editor synchronization (modular system)
 - `SMART_HOVER_SYSTEM.md` - Smart system documentation
+- `SMART_HOVER_ENHANCEMENT.md` - Enhanced editor/preview synchronization guide
 - `MIGRATION_FROM_ORIGINAL.md` - Migration guide from HoverHelper + HoverService
 - `index.ts` - Exports
 - `README.md` - This documentation

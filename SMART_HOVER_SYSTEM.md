@@ -42,6 +42,31 @@ private clearGlobalHover(componentInfo, event) {
 }
 ```
 
+### **4. Enhanced Editor ↔ Preview Synchronization**
+```typescript
+private syncEditorPreviewHover(componentInfo, event) {
+  if (isPreviewHover) {
+    // Preview component hovered → find and hover corresponding editor component
+    const editorComponent = this.findCorrespondingEditorComponent(element);
+    if (editorComponent) {
+      this.hoverEditorComponent(editorComponent); // Instant sync!
+    }
+  } else {
+    // Editor component hovered → find and hover corresponding preview component  
+    const previewComponent = this.findCorrespondingPreviewComponent(element);
+    if (previewComponent) {
+      this.hoverPreviewComponent(previewComponent); // Instant sync!
+    }
+  }
+}
+```
+
+**Smart Component Detection:**
+- **Regular components**: Uses `editor-id` ↔ `id` mapping
+- **Row containers**: Uses `row-container-editor-id` ↔ `id` mapping  
+- **Section containers**: Uses `editor-section-id` ↔ `id` mapping
+- **Bidirectional**: Works both editor → preview and preview → editor
+
 ## 📊 **Performance Improvements**
 
 | Operation | Old System | Smart System | Improvement |
@@ -96,11 +121,15 @@ constructor(private smartHoverManager: SmartHoverManager) {}
 - ✅ **Automatic cleanup**: No floating labels left behind
 - ✅ **Predictable behavior**: Event-driven, not query-driven
 
-## 🔧 **All Original Features Preserved**
+## 🔧 **All Original Features Preserved + Enhanced**
 
 - ✅ **Secondary hover types**: section, button, row, detail, column, card
 - ✅ **Shift key behavior**: Parent hover navigation
-- ✅ **Editor/preview sync**: Automatic synchronization
+- ✅ **Enhanced Editor/Preview Sync**: 
+  - **Instant bidirectional sync**: Hover editor → preview lights up, hover preview → editor lights up
+  - **Supports all component types**: Regular components, row containers, sections
+  - **Smart attribute detection**: `editor-id`, `row-container-editor-id`, `editor-section-id`
+  - **Automatic cleanup**: Synchronized components are cleaned up together
 - ✅ **Background images**: Hover state image changes
 - ✅ **Z-index management**: Editor button handling
 - ✅ **Detail dialog checks**: Context-aware behavior

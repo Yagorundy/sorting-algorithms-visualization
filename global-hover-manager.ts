@@ -89,6 +89,9 @@ export class GlobalHoverManager implements OnDestroy {
 
     // Register component
     this.registeredComponents.set(componentId, componentInfo);
+    
+    // Debug: Component registration
+    // console.log(`[GlobalHoverManager] Registered component:`, { componentId, componentType, isPreviewHover });
 
     // Set up event listeners with smart hover management
     if (previewMode == PreviewModes.editor) {
@@ -133,6 +136,9 @@ export class GlobalHoverManager implements OnDestroy {
   // ================================
 
   private setGlobalHover(componentInfo: ComponentHoverInfo, event: MouseEvent): void {
+    // Debug: Global hover state
+    // console.log(`[GlobalHoverManager] Setting global hover for ${componentInfo.componentId} (${componentInfo.isPreviewHover ? 'preview' : 'editor'})`);
+
     // 1. Clear all current hovers
     this.clearAllHovers();
 
@@ -232,6 +238,9 @@ export class GlobalHoverManager implements OnDestroy {
       this.hoverEditorComponent(element);
     }
 
+    // CRITICAL: Apply editor ↔ preview synchronization
+    this.syncEditorPreviewHover(componentInfo, event);
+
     // Apply secondary hovers to parents (original handleNonTargetElements logic)
     this.applySecondaryHoversToParents(componentInfo, event);
 
@@ -240,6 +249,108 @@ export class GlobalHoverManager implements OnDestroy {
     
     // Set current state
     this.currentHoveredComponent = componentInfo;
+  }
+
+  // ================================
+  // EDITOR ↔ PREVIEW SYNCHRONIZATION
+  // ================================
+
+  private syncEditorPreviewHover(componentInfo: ComponentHoverInfo, event: MouseEvent): void {
+    const { element, componentId, isPreviewHover } = componentInfo;
+
+    if (isPreviewHover) {
+      // Preview component hovered → find and hover corresponding editor component
+      const editorComponent = this.findCorrespondingEditorComponent(element);
+      if (editorComponent) {
+        console.log(`[EditorPreviewSync] Preview ${componentId} → Editor ${editorComponent.id}`);
+        this.hoverEditorComponent(editorComponent);
+        // Also add to secondary hovers so it gets cleaned up properly
+        const editorComponentInfo = this.registeredComponents.get(editorComponent.id);
+        if (editorComponentInfo) {
+          this.secondaryHoveredComponents.add(editorComponentInfo);
+        }
+      } else {
+        console.log(`[EditorPreviewSync] No editor component found for preview ${componentId}`);
+      }
+    } else {
+      // Editor component hovered → find and hover corresponding preview component
+      const previewComponent = this.findCorrespondingPreviewComponent(element);
+      if (previewComponent) {
+        console.log(`[EditorPreviewSync] Editor ${componentId} → Preview ${previewComponent.id}`);
+        this.hoverPreviewComponent(previewComponent, true, false);
+        // Also add to secondary hovers so it gets cleaned up properly
+        const previewComponentInfo = this.registeredComponents.get(previewComponent.id);
+        if (previewComponentInfo) {
+          this.secondaryHoveredComponents.add(previewComponentInfo);
+        }
+      } else {
+        console.log(`[EditorPreviewSync] No preview component found for editor ${componentId}`);
+      }
+    }
+  }
+
+  private findCorrespondingEditorComponent(previewElement: HTMLElement): HTMLElement | null {
+    const previewId = previewElement.id;
+    if (!previewId) {
+      console.log(`[EditorPreviewSync] Preview element has no ID`);
+      return null;
+    }
+
+    // Try different editor attribute patterns
+    const selectors = [
+      `[editor-id="${previewId}"]`,
+      `[row-container-editor-id="${previewId}"]`,
+      `[editor-section-id="${previewId}"]`
+    ];
+
+    // Debug: Searching for editor component
+    // console.log(`[EditorPreviewSync] Looking for editor component for preview ${previewId}`);
+
+    for (const selector of selectors) {
+      const editorElement = document.querySelector(selector) as HTMLElement;
+      if (editorElement) {
+        // console.log(`[EditorPreviewSync] Found editor component using selector: ${selector}`);
+        return editorElement;
+      }
+    }
+
+    // console.log(`[EditorPreviewSync] No editor component found for preview ${previewId}`);
+    return null;
+  }
+
+  private findCorrespondingPreviewComponent(editorElement: HTMLElement): HTMLElement | null {
+    // Get the preview component ID from editor attributes
+    let previewId: string | null = null;
+    let attributeUsed: string = '';
+
+    if (editorElement.hasAttribute('editor-comptype')) {
+      previewId = editorElement.getAttribute('editor-id');
+      attributeUsed = 'editor-id';
+    } else if (editorElement.hasAttribute('row-container-editor-comptype')) {
+      previewId = editorElement.getAttribute('row-container-editor-id');
+      attributeUsed = 'row-container-editor-id';
+    } else if (editorElement.hasAttribute('editor-section-id')) {
+      previewId = editorElement.getAttribute('editor-section-id');
+      attributeUsed = 'editor-section-id';
+    }
+
+    // Debug: Editor element analysis
+    // console.log(`[EditorPreviewSync] Editor element analysis:`, { previewId, attributeUsed });
+
+    if (!previewId) {
+      // console.log(`[EditorPreviewSync] No preview ID found in editor element attributes`);
+      return null;
+    }
+
+    // Find the preview component by ID
+    const previewElement = document.getElementById(previewId);
+    // if (previewElement) {
+    //   console.log(`[EditorPreviewSync] Found preview component: ${previewId}`);
+    // } else {
+    //   console.log(`[EditorPreviewSync] Preview component not found: ${previewId}`);
+    // }
+    
+    return previewElement;
   }
 
   private applySecondaryHoversToParents(componentInfo: ComponentHoverInfo, event: MouseEvent): void {
@@ -287,9 +398,10 @@ export class GlobalHoverManager implements OnDestroy {
       this.changeIndexOfHoverButton('0', this.currentHoveredComponent.element, this.currentHoveredComponent.isPreviewHover);
     }
 
-    // Clear all secondary hovers
+    // Clear all secondary hovers (including editor/preview sync hovers)
     this.secondaryHoveredComponents.forEach(componentInfo => {
       this.removeHoverRelatedAttributesFromElement(componentInfo.element, true);
+      this.changeIndexOfHoverButton('0', componentInfo.element, componentInfo.isPreviewHover);
     });
 
     // Reset state
