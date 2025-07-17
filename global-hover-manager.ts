@@ -182,7 +182,8 @@ export class GlobalHoverManager implements OnDestroy {
         }
       }
       
-      console.log(`[FindSync] No editor partner found for preview ${componentId}`);
+      // GRACEFUL HANDLING: Editor component might not be available when menu changes
+      console.log(`[FindSync] No editor partner found for preview ${componentId} - this is normal when editor menu has changed`);
       return null;
       
     } else {
@@ -270,26 +271,28 @@ export class GlobalHoverManager implements OnDestroy {
     // STEP 1: Clear any existing hover
     this.clearCurrentHover();
 
-    // STEP 2: Find sync partner DYNAMICALLY
+    // STEP 2: Find sync partner DYNAMICALLY (might not exist)
     const partner = this.findSyncPartner(componentInfo);
 
-    // STEP 3: Apply hover to BOTH components
+    // STEP 3: Apply hover to primary component (always works)
     this.applyHoverToComponent(componentInfo, event);
+    
+    // STEP 4: Apply hover to partner component (if available)
     if (partner) {
       this.applyHoverToComponent(partner, event);
     }
 
-    // STEP 4: Apply secondary hovers to parents
+    // STEP 5: Apply secondary hovers to parents (simplified logic)
     const secondaryParents = this.applySecondaryHoversToParents(componentInfo, event);
 
-    // STEP 5: Set current hover state
+    // STEP 6: Set current hover state
     this.currentHoveredPair = {
       primary: componentInfo,
       partner,
       secondaryParents
     };
 
-    // STEP 6: Notify observers
+    // STEP 7: Notify observers
     this.notifyHoverChange(componentInfo.componentId, true, event);
   }
 
@@ -405,23 +408,25 @@ export class GlobalHoverManager implements OnDestroy {
         if (parentInfo) {
           secondaryParents.push(parentInfo);
           
-          // Apply secondary hover styling
+          // ORIGINAL LOGIC: Apply secondary hover styling to PARENTS only
           setTimeout(() => {
             const hoverOverlayEl = this.getHoverOverlayEl(parentComponentId);
             hoverOverlayEl?.classList.remove('outlined');
             hoverOverlayEl?.classList.add('hovered', 'hovered-secondary');
             
-            // Hide floating label for secondary hover
+            // Hide floating label for secondary hover (parents)
             this.toggleFloatingLabel(parentElement, false);
           }, 0);
         }
       }
     });
 
-    // Handle special case: when hovering secondary type, remove its secondary status
+    // ORIGINAL LOGIC: If the directly hovered component is a secondary type, 
+    // remove its secondary status (so it shows as primary hover)
     if (targetCompType && this.SECONDARY_HOVER_TYPES.includes(targetCompType)) {
       setTimeout(() => {
         this.getHoverOverlayEl(element.id)?.classList.remove('hovered-secondary');
+        // Show floating label for the directly hovered component (primary hover)
         this.toggleFloatingLabel(element, true, false);
       }, 0);
     }
@@ -446,7 +451,7 @@ export class GlobalHoverManager implements OnDestroy {
     // Remove hover from primary
     this.removeHoverFromComponent(primary);
     
-    // Remove hover from partner
+    // Remove hover from partner (if it exists)
     if (partner) {
       this.removeHoverFromComponent(partner);
     }
@@ -472,7 +477,7 @@ export class GlobalHoverManager implements OnDestroy {
         `url(${this.mediaService.getBackground(this.page!.components.data[element.id]?.styles.backgroundImageOptimizations, this.page!.components.data[element.id]?.styles.backgroundImageSize).backgroundSrc})` : '';
     }
 
-    // Remove hover classes
+    // Remove hover classes (including hovered-secondary for parents)
     if (element.hasAttribute('comptype')) {
       // Preview component - remove from hover overlay
       this.getHoverOverlayEl(element.id)?.classList.remove('hovered', 'outlined', 'hovered-secondary');
