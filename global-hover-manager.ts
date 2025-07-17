@@ -32,15 +32,17 @@ export class GlobalHoverManager implements OnDestroy {
   private keyDownListenerMethod = this.onKeyDown.bind(this);
   private keyUpListenerMethod = this.onKeyUp.bind(this);
 
-  // ULTRA SIMPLE: Track currently hovered pair
+  // SMART HOVER STATE: Track current hover target
   private currentHoveredPair: {
     primary: ComponentHoverInfo;
     partner?: ComponentHoverInfo;
     secondaryParents: ComponentHoverInfo[];
   } | null = null;
   
-  // EVENT HANDLING PROTECTION
-  private isProcessingHover = false;
+  // GLOBAL MOUSE TRACKING
+  private lastMousePosition: { x: number; y: number } = { x: 0, y: 0 };
+  private hoverDebounceTimer: any = null;
+  private readonly HOVER_DEBOUNCE_MS = 50; // Small delay to prevent flickering
   
   // Component registration and observables
   private registeredComponents = new Map<string, ComponentHoverInfo>();
@@ -68,6 +70,11 @@ export class GlobalHoverManager implements OnDestroy {
 
     document.addEventListener("keydown", this.keyDownListenerMethod);
     document.addEventListener("keyup", this.keyUpListenerMethod);
+    
+    // GLOBAL MOUSE TRACKING
+    document.addEventListener("mousemove", (event) => {
+      this.lastMousePosition = { x: event.clientX, y: event.clientY };
+    });
   }
 
   // ================================
@@ -128,9 +135,9 @@ export class GlobalHoverManager implements OnDestroy {
     
     console.log(`[Register] ${actualComponentId} (${isPreviewHover ? 'preview' : 'editor'})`);
 
-    // Set up bilateral hover events with spam protection
+    // Set up NATURAL EVENT FLOW hover events
     if (previewMode == PreviewModes.editor) {
-      this.setupProtectedHoverEvents(element, componentInfo);
+      this.setupNaturalHoverEvents(element, componentInfo);
     }
 
     // Create observable
@@ -216,103 +223,159 @@ export class GlobalHoverManager implements OnDestroy {
   }
 
   // ================================
-  // PROTECTED HOVER EVENTS (Anti-spam)
+  // NATURAL EVENT FLOW + SMART DETECTION
   // ================================
 
-  private setupProtectedHoverEvents(element: HTMLElement, componentInfo: ComponentHoverInfo): void {
-    element.addEventListener('mouseenter', (event) => {
-      event.stopPropagation();
-      this.handleProtectedHover(componentInfo, event);
+  private setupNaturalHoverEvents(element: HTMLElement, componentInfo: ComponentHoverInfo): void {
+    // Use mouseover/mouseout for more granular control than mouseenter/mouseleave
+    element.addEventListener('mouseover', (event) => {
+      // DON'T stop propagation - let events flow naturally
+      this.handleSmartHover(event);
     });
 
-    element.addEventListener('mouseleave', (event) => {
-      event.stopPropagation();
-      this.handleProtectedUnhover(componentInfo, event);
+    element.addEventListener('mouseout', (event) => {
+      // DON'T stop propagation - let events flow naturally  
+      this.handleSmartHover(event);
     });
   }
 
-  private handleProtectedHover(componentInfo: ComponentHoverInfo, event: MouseEvent): void {
-    // SPAM PROTECTION: Prevent concurrent hover operations
-    if (this.isProcessingHover) {
-      console.log(`[ProtectedHover] BLOCKED - already processing hover for ${componentInfo.componentId}`);
-      return;
+  private handleSmartHover(event: MouseEvent): void {
+    // Clear any pending hover changes
+    if (this.hoverDebounceTimer) {
+      clearTimeout(this.hoverDebounceTimer);
     }
-    
-    this.isProcessingHover = true;
-    
-    try {
-      this.handleBilateralHover(componentInfo, event);
-    } finally {
-      // Always release the lock
-      this.isProcessingHover = false;
-    }
+
+    // Debounce hover changes to prevent flickering on rapid mouse movement
+    this.hoverDebounceTimer = setTimeout(() => {
+      this.determineHoverTarget();
+    }, this.HOVER_DEBOUNCE_MS);
   }
 
-  private handleProtectedUnhover(componentInfo: ComponentHoverInfo, event: MouseEvent): void {
-    // SPAM PROTECTION: Prevent concurrent hover operations  
-    if (this.isProcessingHover) {
-      console.log(`[ProtectedUnhover] BLOCKED - already processing hover for ${componentInfo.componentId}`);
+  private determineHoverTarget(): void {
+    // Use actual mouse position to find the most specific hovered element
+    const elementUnderMouse = document.elementFromPoint(
+      this.lastMousePosition.x, 
+      this.lastMousePosition.y
+    ) as HTMLElement;
+
+    if (!elementUnderMouse) {
+      console.log(`[SmartHover] No element under mouse`);
+      this.clearCurrentHover();
       return;
     }
+
+    // Find the most specific registered component under the mouse
+    const targetComponent = this.findMostSpecificComponent(elementUnderMouse);
     
-    this.isProcessingHover = true;
-    
-    try {
-      this.handleBilateralUnhover(componentInfo, event);
-    } finally {
-      // Always release the lock
-      this.isProcessingHover = false;
+    if (!targetComponent) {
+      console.log(`[SmartHover] No registered component under mouse`);
+      this.clearCurrentHover();
+      return;
     }
+
+    // Check if this is already the current hover target
+    if (this.currentHoveredPair?.primary === targetComponent) {
+      console.log(`[SmartHover] Already hovering ${targetComponent.componentId}`);
+      return;
+    }
+
+    console.log(`[SmartHover] New hover target: ${targetComponent.componentId} (${targetComponent.isPreviewHover ? 'preview' : 'editor'})`);
+    
+    // Apply hover to new target
+    this.applyHoverToTarget(targetComponent);
   }
 
-  private handleBilateralHover(componentInfo: ComponentHoverInfo, event: MouseEvent): void {
-    console.log(`[BilateralHover] ${componentInfo.componentId} (${componentInfo.isPreviewHover ? 'preview' : 'editor'})`);
+  private findMostSpecificComponent(elementUnderMouse: HTMLElement): ComponentHoverInfo | null {
+    // Walk up the DOM tree to find all registered components that contain this element
+    const candidateComponents: ComponentHoverInfo[] = [];
+    let current: HTMLElement | null = elementUnderMouse;
+
+    while (current) {
+      // Check if this element is a registered component
+      if (current.hasAttribute('comptype') || 
+          current.hasAttribute('editor-comptype') || 
+          current.hasAttribute('row-container-editor-comptype') ||
+          current.hasAttribute('editor-section-id')) {
+        
+        const componentId = this.getComponentId(current);
+        if (componentId) {
+          const componentInfo = this.registeredComponents.get(componentId);
+          if (componentInfo) {
+            candidateComponents.push(componentInfo);
+          }
+        }
+      }
+      current = current.parentElement;
+    }
+
+    if (candidateComponents.length === 0) {
+      return null;
+    }
+
+    // Return the most specific (deepest) component
+    const mostSpecific = candidateComponents[0];
+    console.log(`[SmartHover] Found ${candidateComponents.length} candidates, selected: ${mostSpecific.componentId}`);
+    return mostSpecific;
+  }
+
+  private getComponentId(element: HTMLElement): string | null {
+    // Get component ID based on element attributes
+    if (element.hasAttribute('comptype')) {
+      return element.id;
+    } else if (element.hasAttribute('editor-comptype')) {
+      if (element.id) {
+        return element.id;
+      } else {
+        const previewId = element.getAttribute('editor-id');
+        return previewId ? `editor_${previewId}` : null;
+      }
+    } else if (element.hasAttribute('row-container-editor-comptype')) {
+      if (element.id) {
+        return element.id;
+      } else {
+        const previewId = element.getAttribute('row-container-editor-id');
+        return previewId ? `row_editor_${previewId}` : null;
+      }
+    } else if (element.hasAttribute('editor-section-id')) {
+      if (element.id) {
+        return element.id;
+      } else {
+        const previewId = element.getAttribute('editor-section-id');
+        return previewId ? `section_editor_${previewId}` : null;
+      }
+    }
+    return null;
+  }
+
+  private applyHoverToTarget(targetComponent: ComponentHoverInfo): void {
+    console.log(`[ApplyHover] Applying hover to ${targetComponent.componentId}`);
     
-    // STEP 1: Clear any existing hover
+    // Clear any existing hover
     this.clearCurrentHover();
 
-    // STEP 2: Find sync partner DYNAMICALLY (might not exist)
-    const partner = this.findSyncPartner(componentInfo);
+    // Find sync partner dynamically
+    const partner = this.findSyncPartner(targetComponent);
 
-    // STEP 3: Apply hover to primary component (always works)
-    this.applyHoverToComponent(componentInfo, event);
+    // Apply hover to primary component
+    this.applyHoverToComponent(targetComponent);
     
-    // STEP 4: Apply hover to partner component (if available)
+    // Apply hover to partner component (if available)
     if (partner) {
-      this.applyHoverToComponent(partner, event);
+      this.applyHoverToComponent(partner);
     }
 
-    // STEP 5: Apply secondary hovers to parents (simplified logic)
-    const secondaryParents = this.applySecondaryHoversToParents(componentInfo, event);
+    // Apply secondary hovers to parents
+    const secondaryParents = this.applySecondaryHoversToParents(targetComponent);
 
-    // STEP 6: Set current hover state
+    // Set current hover state
     this.currentHoveredPair = {
-      primary: componentInfo,
+      primary: targetComponent,
       partner,
       secondaryParents
     };
 
-    // STEP 7: Notify observers
-    this.notifyHoverChange(componentInfo.componentId, true, event);
-  }
-
-  private handleBilateralUnhover(componentInfo: ComponentHoverInfo, event: MouseEvent): void {
-    console.log(`[BilateralUnhover] ${componentInfo.componentId} (${componentInfo.isPreviewHover ? 'preview' : 'editor'})`);
-    
-    // SIMPLE: Check if mouse moved to a parent component
-    const parentComponentInfo = this.detectParentHoverFromEvent(event);
-    if (parentComponentInfo) {
-      console.log(`[BilateralUnhover] Mouse moved to parent: ${parentComponentInfo.componentId}`);
-      // Trigger parent hover
-      this.handleBilateralHover(parentComponentInfo, event);
-      return;
-    }
-    
-    // SIMPLE: Clear current hover completely
-    this.clearCurrentHover();
-    
     // Notify observers
-    this.notifyHoverChange(componentInfo.componentId, false, event);
+    this.notifyHoverChange(targetComponent.componentId, true, new MouseEvent('mouseover'));
   }
 
   // ================================
@@ -370,14 +433,14 @@ export class GlobalHoverManager implements OnDestroy {
   // HOVER APPLICATION
   // ================================
 
-  private applyHoverToComponent(componentInfo: ComponentHoverInfo, event: MouseEvent): void {
+  private applyHoverToComponent(componentInfo: ComponentHoverInfo): void {
     const { element, componentId, isPreviewHover, addSecondaryHover } = componentInfo;
     
     console.log(`[ApplyHover] Applying hover to ${componentId} (${isPreviewHover ? 'preview' : 'editor'})`);
     
     // Apply visual hover effects
     if (isPreviewHover) {
-      const shiftDown = event?.shiftKey;
+      const shiftDown = false; // No shift key for natural hover
       if (shiftDown && !document.querySelector('#editorButtonContainer:hover')) {
         this.hoverDirectParent(element, true);
       } else {
@@ -391,7 +454,7 @@ export class GlobalHoverManager implements OnDestroy {
     this.changeIndexOfHoverButton('1022', element, isPreviewHover);
   }
 
-  private applySecondaryHoversToParents(componentInfo: ComponentHoverInfo, event: MouseEvent): ComponentHoverInfo[] {
+  private applySecondaryHoversToParents(componentInfo: ComponentHoverInfo): ComponentHoverInfo[] {
     const { element, componentId } = componentInfo;
     const targetCompType = element.getAttribute('comptype') as PageComponentNames;
     const secondaryParents: ComponentHoverInfo[] = [];
@@ -446,7 +509,7 @@ export class GlobalHoverManager implements OnDestroy {
 
     const { primary, partner, secondaryParents } = this.currentHoveredPair;
     
-    console.log(`[ClearHover] Clearing bilateral hover - primary: ${primary.componentId}, partner: ${partner?.componentId || 'none'}, parents: ${secondaryParents.length}`);
+    console.log(`[ClearHover] Clearing smart hover - primary: ${primary.componentId}, partner: ${partner?.componentId || 'none'}, parents: ${secondaryParents.length}`);
 
     // Remove hover from primary
     this.removeHoverFromComponent(primary);
@@ -463,7 +526,7 @@ export class GlobalHoverManager implements OnDestroy {
 
     // Reset state
     this.currentHoveredPair = null;
-    console.log(`[ClearHover] Bilateral hover cleared`);
+    console.log(`[ClearHover] Smart hover cleared`);
   }
 
   private removeHoverFromComponent(componentInfo: ComponentHoverInfo): void {
@@ -632,7 +695,8 @@ export class GlobalHoverManager implements OnDestroy {
       const componentInfo = this.currentHoveredPair.primary;
       if (componentInfo.isPreviewHover) {
         this.clearCurrentHover();
-        this.handleBilateralHover(componentInfo, new MouseEvent('mouseenter'));
+        // Re-determine hover target based on current mouse position
+        this.determineHoverTarget();
       }
     }
   }
@@ -645,9 +709,9 @@ export class GlobalHoverManager implements OnDestroy {
     const componentInfo = this.registeredComponents.get(componentId);
     if (componentInfo) {
       if (isHovered) {
-        this.handleBilateralHover(componentInfo, event || new MouseEvent('mouseenter'));
+        this.applyHoverToTarget(componentInfo);
       } else {
-        this.handleBilateralUnhover(componentInfo, event || new MouseEvent('mouseleave'));
+        this.clearCurrentHover();
       }
     }
   }
@@ -678,6 +742,11 @@ export class GlobalHoverManager implements OnDestroy {
     this.subscriptions = [];
     document.removeEventListener("keydown", this.keyDownListenerMethod);
     document.removeEventListener("keyup", this.keyUpListenerMethod);
+    
+    // Clean up debounce timer
+    if (this.hoverDebounceTimer) {
+      clearTimeout(this.hoverDebounceTimer);
+    }
     
     this.hoverSubjects.forEach(subject => subject.complete());
     this.hoverSubjects.clear();
