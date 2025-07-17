@@ -79,35 +79,56 @@ export class GlobalHoverManager implements OnDestroy {
     const addSecondaryHover = PageComponentNames.detail == componentType && 
                              !(componentType == PageComponentNames.detail && containerType == PageGridComponentNames.detail);
 
-    // Determine sync partner ID upfront (no more DOM queries!)
+    // Determine sync partner ID and ensure proper component ID for editor components
     let syncPartnerId: string | undefined;
+    let actualComponentId = componentId;
+    
     if (isPreviewHover) {
       // Preview component - sync partner is editor component with same ID
       syncPartnerId = componentId; // Editor will be registered with same ID
     } else {
-      // Editor component - find preview ID from attributes
+      // Editor component - find preview ID from attributes and ensure proper editor ID
       if (element.hasAttribute('editor-id')) {
         syncPartnerId = element.getAttribute('editor-id')!;
+        // Ensure editor component has a proper ID for registration
+        if (!element.id) {
+          actualComponentId = `editor_${syncPartnerId}`;
+          element.id = actualComponentId;
+        } else {
+          actualComponentId = element.id;
+        }
       } else if (element.hasAttribute('row-container-editor-id')) {
         syncPartnerId = element.getAttribute('row-container-editor-id')!;
+        if (!element.id) {
+          actualComponentId = `row_editor_${syncPartnerId}`;
+          element.id = actualComponentId;
+        } else {
+          actualComponentId = element.id;
+        }
       } else if (element.hasAttribute('editor-section-id')) {
         syncPartnerId = element.getAttribute('editor-section-id')!;
+        if (!element.id) {
+          actualComponentId = `section_editor_${syncPartnerId}`;
+          element.id = actualComponentId;
+        } else {
+          actualComponentId = element.id;
+        }
       }
     }
 
     const componentInfo: ComponentHoverInfo = {
       element,
-      componentId,
+      componentId: actualComponentId,
       componentType,
       isPreviewHover,
       addSecondaryHover,
       syncPartnerId
     };
 
-    // Register component
-    this.registeredComponents.set(componentId, componentInfo);
+    // Register component with actual ID
+    this.registeredComponents.set(actualComponentId, componentInfo);
     
-    console.log(`[Register] ${componentId} (${isPreviewHover ? 'preview' : 'editor'}) sync→${syncPartnerId || 'none'}`);
+    console.log(`[Register] ${actualComponentId} (${isPreviewHover ? 'preview' : 'editor'}) sync→${syncPartnerId || 'none'}`);
 
     // Set up SIMPLE event listeners with strict event isolation
     if (previewMode == PreviewModes.editor) {
@@ -115,7 +136,7 @@ export class GlobalHoverManager implements OnDestroy {
     }
 
     // Create observable
-    const subject = this.getOrCreateSubject(componentId);
+    const subject = this.getOrCreateSubject(actualComponentId);
     return subject.asObservable().subscribe(result => {
       // Simple subscription - no complex logic here
     });
@@ -127,16 +148,14 @@ export class GlobalHoverManager implements OnDestroy {
 
   private setupSimpleEventListeners(element: HTMLElement, componentInfo: ComponentHoverInfo): void {
     element.addEventListener('mouseenter', (event) => {
-      // CRITICAL: Complete event isolation
+      // CRITICAL: Stop propagation to prevent automatic parent hovers
       event.stopPropagation();
-      event.preventDefault();
       this.handleSimpleHover(componentInfo, true, event);
     });
 
     element.addEventListener('mouseleave', (event) => {
-      // CRITICAL: Complete event isolation  
+      // CRITICAL: Stop propagation but check for parent hover
       event.stopPropagation();
-      event.preventDefault();
       this.handleSimpleUnhover(componentInfo, false, event);
     });
   }
@@ -169,12 +188,85 @@ export class GlobalHoverManager implements OnDestroy {
   private handleSimpleUnhover(componentInfo: ComponentHoverInfo, isHovered: boolean, event: MouseEvent): void {
     console.log(`[SimpleUnhover] ${componentInfo.componentId} (${componentInfo.isPreviewHover ? 'preview' : 'editor'})`);
     
-    // SIMPLIFIED: Just clear everything cleanly
-    // No complex detection logic - just clean up everything
+    // FIXED: Check if mouse moved to a parent component
+    const parentComponentInfo = this.detectParentHoverFromEvent(event);
+    if (parentComponentInfo) {
+      console.log(`[SimpleUnhover] Mouse moved to parent: ${parentComponentInfo.componentId}`);
+      // Trigger hover on parent instead of clearing
+      this.handleSimpleHover(parentComponentInfo, true, event);
+      return;
+    }
+    
+    // SIMPLIFIED: Just clear everything cleanly if no parent found
     this.clearAllHoversCompletely();
     
     // Notify observers
     this.notifyHoverChange(componentInfo.componentId, false, event);
+  }
+
+  // ================================
+  // PARENT HOVER DETECTION
+  // ================================
+
+  private detectParentHoverFromEvent(event: MouseEvent): ComponentHoverInfo | null {
+    // Use relatedTarget to find where mouse moved to
+    const relatedTarget = event.relatedTarget as HTMLElement;
+    if (!relatedTarget) {
+      console.log(`[ParentDetection] No relatedTarget found`);
+      return null;
+    }
+
+    // Find the closest component with comptype or editor attributes
+    const targetComponent = relatedTarget.closest('[comptype], [editor-comptype], [row-container-editor-comptype], [editor-section-id]') as HTMLElement;
+    if (!targetComponent) {
+      console.log(`[ParentDetection] No component found in relatedTarget`);
+      return null;
+    }
+
+    // Get component ID based on type - USE SAME LOGIC AS REGISTRATION
+    let componentId: string | null = null;
+    if (targetComponent.hasAttribute('comptype')) {
+      // Preview component
+      componentId = targetComponent.id;
+    } else if (targetComponent.hasAttribute('editor-comptype')) {
+      // Editor component - use actual ID or create consistent ID
+      if (targetComponent.id) {
+        componentId = targetComponent.id;
+      } else {
+        const previewId = targetComponent.getAttribute('editor-id');
+        componentId = previewId ? `editor_${previewId}` : null;
+      }
+    } else if (targetComponent.hasAttribute('row-container-editor-comptype')) {
+      // Row container editor
+      if (targetComponent.id) {
+        componentId = targetComponent.id;
+      } else {
+        const previewId = targetComponent.getAttribute('row-container-editor-id');
+        componentId = previewId ? `row_editor_${previewId}` : null;
+      }
+    } else if (targetComponent.hasAttribute('editor-section-id')) {
+      // Section editor
+      if (targetComponent.id) {
+        componentId = targetComponent.id;
+      } else {
+        const previewId = targetComponent.getAttribute('editor-section-id');
+        componentId = previewId ? `section_editor_${previewId}` : null;
+      }
+    }
+
+    if (!componentId) {
+      console.log(`[ParentDetection] No component ID found for target`);
+      return null;
+    }
+
+    const componentInfo = this.registeredComponents.get(componentId);
+    if (componentInfo) {
+      console.log(`[ParentDetection] Found registered parent component: ${componentId}`);
+      return componentInfo;
+    } else {
+      console.log(`[ParentDetection] Component not registered: ${componentId}, available:`, Array.from(this.registeredComponents.keys()));
+      return null;
+    }
   }
 
   // ================================
@@ -186,6 +278,7 @@ export class GlobalHoverManager implements OnDestroy {
     
     // Track as hovered
     this.hoveredComponents.add(componentId);
+    console.log(`[ApplyHover] Adding ${componentId} to hovered set`);
     
     // Apply visual hover effects
     if (isPreviewHover) {
@@ -196,6 +289,7 @@ export class GlobalHoverManager implements OnDestroy {
         this.hoverPreviewComponent(element, true, addSecondaryHover);
       }
     } else {
+      console.log(`[ApplyHover] Hovering editor component: ${componentId}`);
       this.hoverEditorComponent(element);
     }
 
@@ -244,7 +338,7 @@ export class GlobalHoverManager implements OnDestroy {
   // ================================
 
   private clearAllHoversCompletely(): void {
-    console.log(`[ClearAll] Clearing ${this.hoveredComponents.size} hovered components`);
+    console.log(`[ClearAll] Clearing ${this.hoveredComponents.size} hovered components:`, Array.from(this.hoveredComponents));
     
     // Clear all tracked hovered components
     this.hoveredComponents.forEach(componentId => {
@@ -252,6 +346,8 @@ export class GlobalHoverManager implements OnDestroy {
       if (componentInfo) {
         console.log(`[ClearAll] Clearing: ${componentId} (${componentInfo.isPreviewHover ? 'preview' : 'editor'})`);
         this.removeHoverFromComponent(componentInfo);
+      } else {
+        console.log(`[ClearAll] WARNING: Component ${componentId} not found in registry`);
       }
     });
 
@@ -261,7 +357,9 @@ export class GlobalHoverManager implements OnDestroy {
   }
 
   private removeHoverFromComponent(componentInfo: ComponentHoverInfo): void {
-    const { element, isPreviewHover } = componentInfo;
+    const { element, componentId, isPreviewHover } = componentInfo;
+    
+    console.log(`[RemoveHover] Removing hover from ${componentId} (isPreview: ${isPreviewHover}, hasCompType: ${element.hasAttribute('comptype')}, hasEditorCompType: ${element.hasAttribute('editor-comptype')})`);
     
     // Remove background image for preview components
     if (isPreviewHover && this.page?.components) {
@@ -272,10 +370,16 @@ export class GlobalHoverManager implements OnDestroy {
     // Remove hover classes
     if (element.hasAttribute('comptype')) {
       // Preview component - remove from hover overlay
+      console.log(`[RemoveHover] Removing hover overlay classes for preview component ${componentId}`);
       this.getHoverOverlayEl(element.id)?.classList.remove('hovered', 'outlined', 'hovered-secondary');
     } else {
       // Editor component - remove hovered class directly
+      console.log(`[RemoveHover] Removing hovered class for editor component ${componentId}`, {
+        beforeRemoval: element.classList.contains('hovered'),
+        classList: Array.from(element.classList)
+      });
       element.classList.remove('hovered');
+      console.log(`[RemoveHover] After removal - still has hovered class:`, element.classList.contains('hovered'));
     }
 
     // Clear floating label (only remove .visible class)
@@ -283,6 +387,8 @@ export class GlobalHoverManager implements OnDestroy {
     
     // Reset button z-index
     this.changeIndexOfHoverButton('0', element, isPreviewHover);
+    
+    console.log(`[RemoveHover] Completed removal for ${componentId}`);
   }
 
   // ================================
@@ -347,9 +453,30 @@ export class GlobalHoverManager implements OnDestroy {
   }
 
   private hoverEditorComponent(editorElement: HTMLElement | null) {
-    if (!editorElement) return;
-    if (editorElement?.classList.contains('drag-handle')) editorElement = editorElement.parentElement!;
-    editorElement?.classList.add('hovered');
+    if (!editorElement) {
+      console.log(`[HoverEditor] No editor element provided`);
+      return;
+    }
+    
+    // Handle drag-handle case
+    if (editorElement?.classList.contains('drag-handle')) {
+      console.log(`[HoverEditor] Element is drag-handle, using parent`);
+      editorElement = editorElement.parentElement!;
+    }
+    
+    if (!editorElement) {
+      console.log(`[HoverEditor] No valid editor element after drag-handle check`);
+      return;
+    }
+    
+    console.log(`[HoverEditor] Adding hovered class to editor element ${editorElement.id || 'no-id'}`, {
+      beforeAdd: editorElement.classList.contains('hovered'),
+      classList: Array.from(editorElement.classList)
+    });
+    
+    editorElement.classList.add('hovered');
+    
+    console.log(`[HoverEditor] After adding - has hovered class:`, editorElement.classList.contains('hovered'));
   }
 
   private changeIndexOfHoverButton(value: string, fragment: HTMLElement, isPreviewHover: boolean) {
