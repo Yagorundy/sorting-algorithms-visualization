@@ -20,7 +20,7 @@ interface ComponentHoverInfo {
   componentType: PageComponentNames;
   isPreviewHover: boolean;
   addSecondaryHover: boolean;
-  syncPartnerId?: string; // ID of the corresponding editor/preview component
+  // Removed syncPartnerId - we'll find it dynamically
 }
 
 @Injectable({
@@ -38,6 +38,9 @@ export class GlobalHoverManager implements OnDestroy {
     partner?: ComponentHoverInfo;
     secondaryParents: ComponentHoverInfo[];
   } | null = null;
+  
+  // EVENT HANDLING PROTECTION
+  private isProcessingHover = false;
   
   // Component registration and observables
   private registeredComponents = new Map<string, ComponentHoverInfo>();
@@ -83,44 +86,28 @@ export class GlobalHoverManager implements OnDestroy {
     const addSecondaryHover = PageComponentNames.detail == componentType && 
                              !(componentType == PageComponentNames.detail && containerType == PageGridComponentNames.detail);
 
-    // SIMPLIFIED: Determine sync partner ID for bilateral sync
-    let syncPartnerId: string | undefined;
+    // SIMPLIFIED: No more sync partner caching - we'll find them dynamically
     let actualComponentId = componentId;
     
-    if (isPreviewHover) {
-      // Preview component - find corresponding editor component ID
-      const editorElement = document.querySelector(`[editor-id="${componentId}"], [row-container-editor-id="${componentId}"], [editor-section-id="${componentId}"]`) as HTMLElement;
-      if (editorElement) {
-        if (editorElement.hasAttribute('editor-id')) {
-          syncPartnerId = editorElement.id || `editor_${componentId}`;
-        } else if (editorElement.hasAttribute('row-container-editor-id')) {
-          syncPartnerId = editorElement.id || `row_editor_${componentId}`;
-        } else if (editorElement.hasAttribute('editor-section-id')) {
-          syncPartnerId = editorElement.id || `section_editor_${componentId}`;
-        }
-      }
-    } else {
-      // Editor component - find preview ID from attributes and ensure proper editor ID
+    if (!isPreviewHover) {
+      // Editor component - ensure proper editor ID
       if (element.hasAttribute('editor-id')) {
-        syncPartnerId = element.getAttribute('editor-id')!;
         if (!element.id) {
-          actualComponentId = `editor_${syncPartnerId}`;
+          actualComponentId = `editor_${element.getAttribute('editor-id')}`;
           element.id = actualComponentId;
         } else {
           actualComponentId = element.id;
         }
       } else if (element.hasAttribute('row-container-editor-id')) {
-        syncPartnerId = element.getAttribute('row-container-editor-id')!;
         if (!element.id) {
-          actualComponentId = `row_editor_${syncPartnerId}`;
+          actualComponentId = `row_editor_${element.getAttribute('row-container-editor-id')}`;
           element.id = actualComponentId;
         } else {
           actualComponentId = element.id;
         }
       } else if (element.hasAttribute('editor-section-id')) {
-        syncPartnerId = element.getAttribute('editor-section-id')!;
         if (!element.id) {
-          actualComponentId = `section_editor_${syncPartnerId}`;
+          actualComponentId = `section_editor_${element.getAttribute('editor-section-id')}`;
           element.id = actualComponentId;
         } else {
           actualComponentId = element.id;
@@ -133,18 +120,17 @@ export class GlobalHoverManager implements OnDestroy {
       componentId: actualComponentId,
       componentType,
       isPreviewHover,
-      addSecondaryHover,
-      syncPartnerId
+      addSecondaryHover
     };
 
     // Register component with actual ID
     this.registeredComponents.set(actualComponentId, componentInfo);
     
-    console.log(`[Register] ${actualComponentId} (${isPreviewHover ? 'preview' : 'editor'}) ↔ ${syncPartnerId || 'none'}`);
+    console.log(`[Register] ${actualComponentId} (${isPreviewHover ? 'preview' : 'editor'})`);
 
-    // Set up SIMPLE bilateral hover events
+    // Set up bilateral hover events with spam protection
     if (previewMode == PreviewModes.editor) {
-      this.setupBilateralHoverEvents(element, componentInfo);
+      this.setupProtectedHoverEvents(element, componentInfo);
     }
 
     // Create observable
@@ -155,19 +141,127 @@ export class GlobalHoverManager implements OnDestroy {
   }
 
   // ================================
-  // BILATERAL HOVER EVENTS
+  // DYNAMIC SYNC PARTNER DETECTION
   // ================================
 
-  private setupBilateralHoverEvents(element: HTMLElement, componentInfo: ComponentHoverInfo): void {
+  private findSyncPartner(componentInfo: ComponentHoverInfo): ComponentHoverInfo | null {
+    const { element, componentId, isPreviewHover } = componentInfo;
+    
+    if (isPreviewHover) {
+      // Preview component - find corresponding editor component
+      console.log(`[FindSync] Looking for editor partner for preview ${componentId}`);
+      
+      const editorSelectors = [
+        `[editor-id="${componentId}"]`,
+        `[row-container-editor-id="${componentId}"]`, 
+        `[editor-section-id="${componentId}"]`
+      ];
+      
+      for (const selector of editorSelectors) {
+        const editorElement = document.querySelector(selector) as HTMLElement;
+        if (editorElement) {
+          // Determine the editor component ID
+          let editorComponentId = editorElement.id;
+          if (!editorComponentId) {
+            if (editorElement.hasAttribute('editor-id')) {
+              editorComponentId = `editor_${componentId}`;
+            } else if (editorElement.hasAttribute('row-container-editor-id')) {
+              editorComponentId = `row_editor_${componentId}`;
+            } else if (editorElement.hasAttribute('editor-section-id')) {
+              editorComponentId = `section_editor_${componentId}`;
+            }
+          }
+          
+          const editorComponentInfo = this.registeredComponents.get(editorComponentId);
+          if (editorComponentInfo) {
+            console.log(`[FindSync] Found editor partner: ${editorComponentId}`);
+            return editorComponentInfo;
+          } else {
+            console.log(`[FindSync] Editor element found but not registered: ${editorComponentId}`);
+          }
+        }
+      }
+      
+      console.log(`[FindSync] No editor partner found for preview ${componentId}`);
+      return null;
+      
+    } else {
+      // Editor component - find corresponding preview component
+      console.log(`[FindSync] Looking for preview partner for editor ${componentId}`);
+      
+      let previewId: string | null = null;
+      if (element.hasAttribute('editor-id')) {
+        previewId = element.getAttribute('editor-id');
+      } else if (element.hasAttribute('row-container-editor-id')) {
+        previewId = element.getAttribute('row-container-editor-id');
+      } else if (element.hasAttribute('editor-section-id')) {
+        previewId = element.getAttribute('editor-section-id');
+      }
+      
+      if (previewId) {
+        const previewComponentInfo = this.registeredComponents.get(previewId);
+        if (previewComponentInfo) {
+          console.log(`[FindSync] Found preview partner: ${previewId}`);
+          return previewComponentInfo;
+        } else {
+          console.log(`[FindSync] Preview component not registered: ${previewId}`);
+        }
+      } else {
+        console.log(`[FindSync] No preview ID found in editor attributes`);
+      }
+      
+      return null;
+    }
+  }
+
+  // ================================
+  // PROTECTED HOVER EVENTS (Anti-spam)
+  // ================================
+
+  private setupProtectedHoverEvents(element: HTMLElement, componentInfo: ComponentHoverInfo): void {
     element.addEventListener('mouseenter', (event) => {
       event.stopPropagation();
-      this.handleBilateralHover(componentInfo, event);
+      this.handleProtectedHover(componentInfo, event);
     });
 
     element.addEventListener('mouseleave', (event) => {
       event.stopPropagation();
-      this.handleBilateralUnhover(componentInfo, event);
+      this.handleProtectedUnhover(componentInfo, event);
     });
+  }
+
+  private handleProtectedHover(componentInfo: ComponentHoverInfo, event: MouseEvent): void {
+    // SPAM PROTECTION: Prevent concurrent hover operations
+    if (this.isProcessingHover) {
+      console.log(`[ProtectedHover] BLOCKED - already processing hover for ${componentInfo.componentId}`);
+      return;
+    }
+    
+    this.isProcessingHover = true;
+    
+    try {
+      this.handleBilateralHover(componentInfo, event);
+    } finally {
+      // Always release the lock
+      this.isProcessingHover = false;
+    }
+  }
+
+  private handleProtectedUnhover(componentInfo: ComponentHoverInfo, event: MouseEvent): void {
+    // SPAM PROTECTION: Prevent concurrent hover operations  
+    if (this.isProcessingHover) {
+      console.log(`[ProtectedUnhover] BLOCKED - already processing hover for ${componentInfo.componentId}`);
+      return;
+    }
+    
+    this.isProcessingHover = true;
+    
+    try {
+      this.handleBilateralUnhover(componentInfo, event);
+    } finally {
+      // Always release the lock
+      this.isProcessingHover = false;
+    }
   }
 
   private handleBilateralHover(componentInfo: ComponentHoverInfo, event: MouseEvent): void {
@@ -176,15 +270,8 @@ export class GlobalHoverManager implements OnDestroy {
     // STEP 1: Clear any existing hover
     this.clearCurrentHover();
 
-    // STEP 2: Find sync partner
-    const partner = componentInfo.syncPartnerId ? 
-      this.registeredComponents.get(componentInfo.syncPartnerId) : undefined;
-    
-    if (partner) {
-      console.log(`[BilateralHover] Found partner: ${partner.componentId}`);
-    } else {
-      console.log(`[BilateralHover] No partner found for ${componentInfo.syncPartnerId || 'none'}`);
-    }
+    // STEP 2: Find sync partner DYNAMICALLY
+    const partner = this.findSyncPartner(componentInfo);
 
     // STEP 3: Apply hover to BOTH components
     this.applyHoverToComponent(componentInfo, event);
